@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -83,7 +84,12 @@ func main() {
 	//var forever chan struct{}
 	go func() {
 		for d := range msgs {
-			err = sendDiscordMessage(discord, "1086341912803426325", string(d.Body))
+			var msg Message
+			err := json.Unmarshal(d.Body, &msg)
+			if err != nil {
+				log.Printf("Failed to parse messages: %v", err)
+			}
+			err = sendDiscordMessage(discord, "1086341912803426325", msg)
 			if err != nil {
 				log.Printf("Failed to send message to Discord: %v", err)
 			}

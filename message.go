@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"time"
 )
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -26,7 +27,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func sendDiscordMessage(s *discordgo.Session, channelID string, content string) error {
-	_, err := s.ChannelMessageSend(channelID, content)
+type Message struct {
+	Type       string    `json:"type"`
+	Message    string    `json:"message"`
+	Suggestion string    `json:"suggestion,omitempty"`
+	Time       time.Time `json:"time,omitempty"`
+}
+
+func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
+	_, err := s.ChannelMessageSend(channelID, fmt.Sprintf("**TYPE**\n%s\nMessage:%s\nSuggestion:%s", msg.Type, msg.Message, msg.Suggestion))
 	return err
 }
