@@ -12,6 +12,14 @@ import (
 	"syscall"
 )
 
+type RabbitMQConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Queue    string
+}
+
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -30,7 +38,15 @@ func main() {
 	// In this example, we only care about receiving message events.
 	discord.Identify.Intents = discordgo.IntentsGuildMessages
 
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	RMQConfig := RabbitMQConfig{
+		Host:     os.Getenv("RABBIT_HOST"),
+		Port:     os.Getenv("RABBIT_PORT"),
+		User:     os.Getenv("RABBIT_USER"),
+		Password: os.Getenv("RABBIT_PASS"),
+		Queue:    os.Getenv("RABBIT_DISCORD_QUEUE"),
+	}
+
+	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", RMQConfig.User, RMQConfig.Password, RMQConfig.Host, RMQConfig.Port))
 	if err != nil {
 		fmt.Println("Failed to connect to RabbitMQ")
 		log.Fatal(err)
@@ -45,7 +61,7 @@ func main() {
 	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"discord_queue", // name
+		RMQConfig.Queue, // name
 		true,            // durable
 		false,           // delete when unused
 		false,           // exclusive
@@ -88,7 +104,7 @@ func main() {
 			if err != nil {
 				log.Printf("Failed to parse messages: %v", err)
 			}
-			err = sendDiscordMessage(discord, "1086341912803426325", msg)
+			err = sendDiscordMessage(discord, os.Getenv("CHANNEL_ID"), msg)
 			if err != nil {
 				log.Printf("Failed to send message to Discord: %v", err)
 			}
