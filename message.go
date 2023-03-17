@@ -14,6 +14,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	if len(m.Content) == 0 {
+		return
+	}
+
 	if m.Content == "!status" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "I'm alive!")
 		if err != nil {
