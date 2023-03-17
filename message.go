@@ -28,7 +28,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 type Message struct {
-	Type       string    `json:"type"`
+	Type       string    `json:"type" example:"error/warning/log"`
 	Message    string    `json:"message"`
 	Suggestion string    `json:"suggestion,omitempty"`
 	Time       time.Time `json:"time,omitempty"`

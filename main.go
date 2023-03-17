@@ -93,7 +93,10 @@ func main() {
 			if err != nil {
 				log.Printf("Failed to send message to Discord: %v", err)
 			}
-			d.Ack(false)
+			err = d.Ack(false)
+			if err != nil {
+				log.Printf("Failed to acknowledge message: %v", err)
+			}
 		}
 	}()
 
@@ -107,7 +110,7 @@ func main() {
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
 	// Cleanly close down the Discord session.
