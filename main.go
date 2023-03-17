@@ -81,7 +81,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//var forever chan struct{}
 	go func() {
 		for d := range msgs {
 			var msg Message
