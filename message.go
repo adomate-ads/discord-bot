@@ -42,7 +42,7 @@ type Message struct {
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
 
-	embed_full := &discordgo.MessageEmbed{
+	Embed_Full := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "AdomateHelpDesk"},
     	Color:       0x800000, // Maroon - should change later based on message 
 		// FIXED using switch statement for msg.Type
@@ -85,20 +85,20 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	}
 	switch msg.Type {
 		case "Code Red":
-			embed_full.Color = 0xFF0000
+			Embed_Full.Color = 0xFF0000
 		case "Code Yellow":
-			embed_full.Color = 0xFFFF00
+			Embed_Full.Color = 0xFFFF00
 		case "Code Green":
-			embed_full.Color = 0x00FF00
+			Embed_Full.Color = 0x00FF00
 		case "Code Orange":
-			embed_full.Color = 0xFFA500
+			Embed_Full.Color = 0xFFA500
 		case "Code Blue":
-			embed_full.Color = 0x0000FF
+			Embed_Full.Color = 0x0000FF
 		default:
-			embed_full.Color = 0x000000
+			Embed_Full.Color = 0x000000
 	}
 	
-		_, err := s.ChannelMessageSendEmbed(channelID, embed_full)
+		_, err := s.ChannelMessageSendEmbed(channelID, Embed_Full)
 		return err
 	
 }
