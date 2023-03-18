@@ -21,13 +21,13 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// FIXME doesn't send msg to the channel
 	if m.Content == "!status" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "I'm alive!")
-			fmt.Println(err)
+		fmt.Println(err)
 	} else if m.Content == "!isdown" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "All services are operational")
-			fmt.Println(err)
+		fmt.Println(err)
 	} else if m.Content[0] == '!' {
 		_, err := s.ChannelMessageSend(m.ChannelID, "Invalid, try again!")
-			fmt.Println(err)
+		fmt.Println(err)
 	}
 }
 
@@ -35,76 +35,68 @@ type Message struct {
 	Type       string    `json:"type" example:"error/warning/log"`
 	Message    string    `json:"message"`
 	Suggestion string    `json:"suggestion,omitempty"`
-	//FIXED use golang time package to get time from the user's location
-	// Time       string 	 `json:"time,omitempty"` 
-	Origin 	   string	 `json:"origin" example:"from:api/from:gdc"`
+	Time       time.Time `json:"time,omitempty"`
+	Origin     string    `json:"origin" example:"api/gac"`
 }
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
 
-	EmbedFull := &discordgo.MessageEmbed{
-		Author:      &discordgo.MessageEmbedAuthor{Name: "AdomateHelpDesk"},
-    	Color:       0x800000, // Maroon - should change later based on message 
-		// FIXED using switch statement for msg.Type
-		// Red for error
-		// Yellow for slow service
-		// Green for fixes
-		// Orange for server down
-		// Blue for general
+	embedFull := &discordgo.MessageEmbed{
+		Author: &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
+		Color:  0x800000, // Maroon - should change later based on message
 
-		Description: "This is a message from Team Adomate",
+		Description: fmt.Sprintf("%s from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
-			&discordgo.MessageEmbedField{
+			{
 				Name:   "Type: ",
 				Value:  msg.Type,
 				Inline: true,
 			},
-			&discordgo.MessageEmbedField{
-				Name:   "Message: ",
+			{
+				Name:   "Origin: ",
+				Value:  msg.Origin,
+				Inline: true,
+			},
+			{
+				Name: "Message: ",
 				Value: func() string {
 					if msg.Message == "" {
 						return "-"
 					}
-					return msg.Message
+					return "```" + msg.Message + "```"
 				}(),
-				Inline: true,
+				Inline: false,
 			},
-			&discordgo.MessageEmbedField{
-				Name:   "Suggestion: ",
-				// FIXED suggestion omit logic here
-				Value:  func() string {
+			{
+				Name: "Suggestion: ",
+				Value: func() string {
 					if msg.Suggestion == "" {
 						return "-"
 					}
-					return msg.Suggestion
+					return "```" + msg.Suggestion + "```"
 				}(),
-			},
-			&discordgo.MessageEmbedField{ //FIXED Pass time with golang
-				Name:   "Time: ",
-				Value:  time.Now().Format("02 Jan 06 15:04:01 CDT"),
+				Inline: false,
 			},
 		},
 		Footer: &discordgo.MessageEmbedFooter{
-				Text: msg.Origin,
+			Text: fmt.Sprintf("Time: %s", msg.Time.Format("02 Jan 06 15:04:01 CDT")),
 		},
 	}
 	// switch embed color depending on msg type
 	switch msg.Type {
-		case "Code Red":
-			EmbedFull.Color = 0xFF0000
-		case "Code Yellow":
-			EmbedFull.Color = 0xFFFF00
-		case "Code Green":
-			EmbedFull.Color = 0x00FF00
-		case "Code Orange":
-			EmbedFull.Color = 0xFFA500
-		case "Code Blue":
-			EmbedFull.Color = 0x0000FF
-		default:
-			EmbedFull.Color = 0x000000
+	case "Error":
+		embedFull.Color = 0xFF0000
+	case "Warning":
+		embedFull.Color = 0xFFFF00
+	case "Success":
+		embedFull.Color = 0x00FF00
+	case "Log":
+		embedFull.Color = 0x0000FF
+	default:
+		embedFull.Color = 0x000000
 	}
-	
-		_, err := s.ChannelMessageSendEmbed(channelID, EmbedFull)
-		return err
-	
+
+	_, err := s.ChannelMessageSendEmbed(channelID, embedFull)
+	return err
+
 }
