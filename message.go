@@ -66,7 +66,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			},
 			&discordgo.MessageEmbedField{
 				Name:   "Suggestion: ",
-				// TODO test suggestion omit logic here
+				// FIXED suggestion omit logic here
 				Value:  func() string {
 					if msg.Suggestion == "" {
 						return "-"
@@ -76,7 +76,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			},
 			&discordgo.MessageEmbedField{ //FIXED Pass time with golang
 				Name:   "Time: ",
-				Value:  time.Now().Format("02 Jan 06 15:04 CDT"),
+				Value:  time.Now().Format("02 Jan 06 15:04:01 CDT"),
 			},
 		},
 		Footer: &discordgo.MessageEmbedFooter{
