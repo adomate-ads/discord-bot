@@ -83,6 +83,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 				Text: msg.Origin,
 		},
 	}
+	// switch embed color depending on msg type
 	switch msg.Type {
 		case "Code Red":
 			Embed_Full.Color = 0xFF0000
