@@ -66,7 +66,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			},
 			&discordgo.MessageEmbedField{
 				Name:   "Suggestion: ",
-				// FIXED  suggestion omit logic here
+				// TODO test suggestion omit logic here
 				Value:  func() string {
 					if msg.Suggestion == "" {
 						return "-"
