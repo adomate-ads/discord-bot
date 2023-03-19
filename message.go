@@ -35,9 +35,18 @@ type Message struct {
 	Type       string    `json:"type" example:"error/warning/log"`
 	Message    string    `json:"message"`
 	Suggestion string    `json:"suggestion,omitempty"`
-	Time       time.Time `json:"time,omitempty"`
+	Time       time.Time `json:"time,omitempty" example:"2018-12-12T11:45:26.371Z"`
 	Origin     string    `json:"origin" example:"api/gac"`
 }
+/* message example
+{
+"type":"Error",
+"message":"test",
+"suggestion":"lol",
+"origin":"api",
+"time":"2018-12-12T11:45:26.371Z"
+}
+*/
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
 
@@ -96,7 +105,24 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		embedFull.Color = 0x000000
 	}
 
-	_, err := s.ChannelMessageSendEmbed(channelID, embedFull)
+	message := &discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+				embedFull,
+		},
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label: "Delete Message",
+						Style: discordgo.DangerButton,
+						Disabled: false,
+						CustomID: "response_delete",
+					},
+				},
+			},
+		},
+	}
+	_, err := s.ChannelMessageSendComplex(channelID, message)
 	return err
 
 }
