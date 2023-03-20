@@ -13,7 +13,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	messageID := m.ID // get message id
+	// messageID := m.ID // get message id
 	
 	if len(m.Content) == 0 {
 		return
@@ -24,10 +24,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		fmt.Println(err)
 	} else if m.Content == "!isdown" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "All services are operational")
-		fmt.Println(err)
-	} else if m.Content == "!delete"{
-		fmt.Println("msg deleted")
-		err := s.ChannelMessageDelete(m.ChannelID, messageID)
 		fmt.Println(err)
 	} else if m.Content[0] == '!'{
 		_, err := s.ChannelMessageSend(m.ChannelID, "invalid command")
@@ -125,7 +121,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		},
 	}
 	sentMsg, err := s.ChannelMessageSendComplex(channelID, message)
-	fmt.Println(sentMsg.ID) 
+	// fmt.Println(sentMsg.ID) 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
         if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
             err := s.ChannelMessageDelete(channelID, sentMsg.ID)
