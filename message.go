@@ -89,6 +89,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			Text: fmt.Sprintf("Time: %s", msg.Time.Format("02 Jan 06 15:04:01 CDT")),
 		},
 	}
+
 	// switch embed color depending on msg type
 	switch msg.Type {
 	case "Error":
@@ -120,12 +121,13 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			},
 		},
 	}
+
 	sentMsg, err := s.ChannelMessageSendComplex(channelID, message)
-	// fmt.Println(sentMsg.ID) 
+
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
         if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
             err := s.ChannelMessageDelete(channelID, sentMsg.ID)
-			fmt.Println("deleting message...", err)
+			fmt.Println("deleting message...")
             if err != nil {
                 fmt.Println("Error deleting message:", err)
             }
