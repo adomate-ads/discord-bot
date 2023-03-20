@@ -13,20 +13,24 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-
+	messageID := m.ID // get message id
+	
 	if len(m.Content) == 0 {
 		return
 	}
 	// FIXED removed nil check below
-	// FIXME doesn't send msg to the channel
 	if m.Content == "!status" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "I'm alive!")
 		fmt.Println(err)
 	} else if m.Content == "!isdown" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "All services are operational")
 		fmt.Println(err)
-	} else if m.Content[0] == '!' {
-		_, err := s.ChannelMessageSend(m.ChannelID, "Invalid, try again!")
+	} else if m.Content == "!delete"{
+		fmt.Println("msg deleted")
+		err := s.ChannelMessageDelete(m.ChannelID, messageID)
+		fmt.Println(err)
+	} else if m.Content[0] == '!'{
+		_, err := s.ChannelMessageSend(m.ChannelID, "invalid command")
 		fmt.Println(err)
 	}
 }
@@ -49,11 +53,9 @@ type Message struct {
 */
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
-
 	embedFull := &discordgo.MessageEmbed{
-		Author: &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
+		Author: &discordgo.MessageEmbedAuthor{Name: "AdomateHelpDesk"},
 		Color:  0x800000, // Maroon - should change later based on message
-
 		Description: fmt.Sprintf("%s from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
 			{
@@ -122,7 +124,16 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			},
 		},
 	}
-	_, err := s.ChannelMessageSendComplex(channelID, message)
+	sentMsg, err := s.ChannelMessageSendComplex(channelID, message)
+	fmt.Println(sentMsg.ID) 
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+        if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
+            err := s.ChannelMessageDelete(channelID, sentMsg.ID)
+			fmt.Println("deleting message...", err)
+            if err != nil {
+                fmt.Println("Error deleting message:", err)
+            }
+		}
+    })
 	return err
-
 }
