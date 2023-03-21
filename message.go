@@ -127,7 +127,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
         if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
             err := s.ChannelMessageDelete(channelID, sentMsg.ID)
 			if err != nil {
-			fmt.Println("Error deleting message")
+			fmt.Println("Error occurred during deletion:" , err)
 			}
 		}
     })
