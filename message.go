@@ -13,12 +13,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	// messageID := m.ID // get message id
 	
 	if len(m.Content) == 0 {
 		return
 	}
-	// FIXED removed nil check below
+	
 	if m.Content == "!status" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "I'm alive!")
 		fmt.Println(err)
@@ -127,10 +126,9 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
         if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
             err := s.ChannelMessageDelete(channelID, sentMsg.ID)
-			fmt.Println("deleting message...")
-            if err != nil {
-                fmt.Println("Error deleting message:", err)
-            }
+			if err != nil {
+			fmt.Println("Error deleting message")
+			}
 		}
     })
 	return err
