@@ -10,7 +10,7 @@ Create a bot using the Discord Developers Portal
 
 `https://discord.com/developers/applications/`
 
-Allow the Bot to send and manage messages in the channel.
+Allow the bot to send and manage messages in the channel.
 
 ### Clone this repository
 
@@ -31,7 +31,7 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 
 - DISCORD_BOT_TOKEN - Produced my the Discord Developers Portal
 - CHANNEL_ID - Can be obtained from the server channel
-- RABBIT_HOST - localhost/url
+- RABBIT_HOST - localhost or url for the RabbitMQ server
 - RABBIT_PORT - 15672 by default
 - RABBIT_USER - RabbitMQ Username
 - RABBIT_PASS - RabbitMQ Password
@@ -51,13 +51,13 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 
 Messages are categorized into four types:
 
-`Error` - The API has encountered an error. Error event messages are marked with red.
+`Error` - The API has encountered an error. Error event messages are marked with red embed.
 
-`Warning` - The API has encountered a potential error. Proceed with caution! Warning event messages are marked with yellow.
+`Warning` - The API has encountered a potential error. Proceed with caution! Warning event messages are marked with yellow embed.
 
-`Log` - The API logged an event. Log event messages are marked with green.
+`Log` - The API logged an event. Log event messages are marked with green embed.
 
-`General` - General event messages. General event messages are marked with white.
+`General` - General event messages. General event messages are marked with white embed.
 
 ### Suggestions
 
