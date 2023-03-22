@@ -29,14 +29,13 @@ Run the go files from the cloned repository using `go run all`.
 To integrate the ChatBot with the Adomate API, update the .env file with the following parameters:
 
 
-- DISCORD_BOT_TOKEN - Produced my the Discord Developers Portal
+- DISCORD_BOT_TOKEN - Produced by the Discord Developers Portal
 - CHANNEL_ID - Can be obtained from the server channel
 - RABBIT_HOST - localhost or url for the RabbitMQ server
 - RABBIT_PORT - 15672 by default
 - RABBIT_USER - RabbitMQ Username
 - RABBIT_PASS - RabbitMQ Password
 - RABBIT_DISCORD_QUEUE - RabbitMQ queue name
-
 
 ## Commands
  `!status` - provides status for the bot 
