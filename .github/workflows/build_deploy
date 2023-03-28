@@ -1,0 +1,59 @@
+name: Build
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  build:
+    name: Build and push Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set Tag in env variable
+        run: |
+          echo "sha_short=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+          echo "${{ secrets.DOCKER_USER }}/${{ secrets.REPOSITORY_NAME }}" > APP_NAME
+          echo "$GITHUB_SHA" > TAG
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag $(cat APP_NAME):${{ github.sha }}
+      - name: Tag the image to commit
+        run: docker tag $(cat APP_NAME):${{ github.sha }} $(cat APP_NAME):${{ github.sha }}
+      - name: Docker Login
+        run: docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Image push
+        run: docker push $(cat APP_NAME):${{ github.sha }}
+  deploy:
+    name: Deploy to ArgoCD
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+        with:
+          repository: 'adomate-ads/gitops'
+          path: gitops
+          token: ${{ secrets.G_TOKEN }}
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+      - name: Update manifests
+        run: |
+          cd $GITHUB_WORKSPACE/gitops
+          cd apps
+          cd discord-bot
+          cd manifests
+          kustomize edit set image ${{ secrets.DOCKER_USER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.sha }}
+          cd ..
+          kustomize build ./manifests/ > ./kustomization/manifests.yaml
+      - name: Commit and push changes
+        run: |
+          cd $GITHUB_WORKSPACE/gitops
+          git config --global user.email "raaj.patel229@gmail.com"
+          git config --global user.name "Raajheer1"
+          echo ${{ github.sha }}
+          git add .
+          git commit -m "Update Discord-Bot manifests to ${{ github.sha }}"
+      - name: Push to gitops repo
+        run: |
+          cd $GITHUB_WORKSPACE/gitops
+          git push origin main
