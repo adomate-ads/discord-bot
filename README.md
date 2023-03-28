@@ -89,6 +89,3 @@ RabbitMQ queue takes in the following message format to send messages to the dis
 ```
 
 Where type is the message type, message provides the message content, suggestion provides suggestions to fix errors or warnings, origin provides the name of the event originator, and time indicates the time when the event occurred in the API.
-
-### Changelog
-> Coming Soon...
