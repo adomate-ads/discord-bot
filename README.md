@@ -52,7 +52,7 @@ Messages are categorized into four types:
 
 `Error` - The API has encountered an error. Error event messages are marked with red embed.
 
-`Warning` - The API has encountered a potential error. Proceed with caution! Warning event messages are marked with yellow embed.
+`Warn` - The API has encountered a potential error. Proceed with caution! Warning event messages are marked with yellow embed.
 
 `Log` - The API logged an event. Log event messages are marked with green embed.
 

@@ -13,18 +13,18 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	
+
 	if len(m.Content) == 0 {
 		return
 	}
-	
+
 	if m.Content == "!status" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "I'm alive!")
 		fmt.Println(err)
 	} else if m.Content == "!isdown" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "All services are operational")
 		fmt.Println(err)
-	} else if m.Content[0] == '!'{
+	} else if m.Content[0] == '!' {
 		_, err := s.ChannelMessageSend(m.ChannelID, "invalid command")
 		fmt.Println(err)
 	}
@@ -37,6 +37,7 @@ type Message struct {
 	Time       time.Time `json:"time,omitempty" example:"2018-12-12T11:45:26.371Z"`
 	Origin     string    `json:"origin" example:"api/gac"`
 }
+
 /* message example
 {
 "type":"Error",
@@ -49,8 +50,8 @@ type Message struct {
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
 	embedFull := &discordgo.MessageEmbed{
-		Author: &discordgo.MessageEmbedAuthor{Name: "AdomateHelpDesk"},
-		Color:  0x800000, // Maroon - should change later based on message
+		Author:      &discordgo.MessageEmbedAuthor{Name: "AdomateHelpDesk"},
+		Color:       0x800000, // Maroon - should change later based on message
 		Description: fmt.Sprintf("%s from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
 			{
@@ -93,7 +94,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	switch msg.Type {
 	case "Error":
 		embedFull.Color = 0xFF0000
-	case "Warning":
+	case "Warn":
 		embedFull.Color = 0xFFFF00
 	case "Success":
 		embedFull.Color = 0x00FF00
@@ -105,14 +106,14 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 
 	message := &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{
-				embedFull,
+			embedFull,
 		},
 		Components: []discordgo.MessageComponent{
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.Button{
-						Label: "Delete Message",
-						Style: discordgo.DangerButton,
+						Label:    "Delete Message",
+						Style:    discordgo.DangerButton,
 						Disabled: false,
 						CustomID: "response_delete",
 					},
@@ -124,12 +125,12 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	sentMsg, err := s.ChannelMessageSendComplex(channelID, message)
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-        if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
-            err := s.ChannelMessageDelete(channelID, sentMsg.ID)
+		if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
+			err := s.ChannelMessageDelete(channelID, sentMsg.ID)
 			if err != nil {
-				fmt.Println("Error occurred during deletion:" , err)
+				fmt.Println("Error occurred during deletion:", err)
 			}
 		}
-    })
+	})
 	return err
 }
