@@ -17,8 +17,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(m.Content) == 0 {
 		return
 	}
-	// FIXED removed nil check below
-	// FIXME doesn't send msg to the channel
+
 	if m.Content == "!status" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "I'm alive!")
 		fmt.Println(err)
@@ -26,7 +25,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		_, err := s.ChannelMessageSend(m.ChannelID, "All services are operational")
 		fmt.Println(err)
 	} else if m.Content[0] == '!' {
-		_, err := s.ChannelMessageSend(m.ChannelID, "Invalid, try again!")
+		_, err := s.ChannelMessageSend(m.ChannelID, "invalid command")
 		fmt.Println(err)
 	}
 }
@@ -35,16 +34,24 @@ type Message struct {
 	Type       string    `json:"type" example:"error/warning/log"`
 	Message    string    `json:"message"`
 	Suggestion string    `json:"suggestion,omitempty"`
-	Time       time.Time `json:"time,omitempty"`
+	Time       time.Time `json:"time,omitempty" example:"2018-12-12T11:45:26.371Z"`
 	Origin     string    `json:"origin" example:"api/gac"`
 }
 
+/* message example
+{
+"type":"Error",
+"message":"test",
+"suggestion":"lol",
+"origin":"api",
+"time":"2018-12-12T11:45:26.371Z"
+}
+*/
+
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
-
 	embedFull := &discordgo.MessageEmbed{
-		Author: &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
-		Color:  0x800000, // Maroon - should change later based on message
-
+		Author:      &discordgo.MessageEmbedAuthor{Name: "AdomateHelpDesk"},
+		Color:       0x800000, // Maroon - should change later based on message
 		Description: fmt.Sprintf("%s from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
 			{
@@ -82,11 +89,12 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			Text: fmt.Sprintf("Time: %s", msg.Time.Format("02 Jan 06 15:04:01 CDT")),
 		},
 	}
+
 	// switch embed color depending on msg type
 	switch msg.Type {
 	case "Error":
 		embedFull.Color = 0xFF0000
-	case "Warning":
+	case "Warn":
 		embedFull.Color = 0xFFFF00
 	case "Success":
 		embedFull.Color = 0x00FF00
@@ -96,7 +104,33 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		embedFull.Color = 0x000000
 	}
 
-	_, err := s.ChannelMessageSendEmbed(channelID, embedFull)
-	return err
+	message := &discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+			embedFull,
+		},
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    "Delete Message",
+						Style:    discordgo.DangerButton,
+						Disabled: false,
+						CustomID: "response_delete",
+					},
+				},
+			},
+		},
+	}
 
+	sentMsg, err := s.ChannelMessageSendComplex(channelID, message)
+
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
+			err := s.ChannelMessageDelete(channelID, sentMsg.ID)
+			if err != nil {
+				fmt.Println("Error occurred during deletion:", err)
+			}
+		}
+	})
+	return err
 }
