@@ -49,6 +49,7 @@ func main() {
 	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", RMQConfig.User, RMQConfig.Password, RMQConfig.Host, RMQConfig.Port))
 	if err != nil {
 		fmt.Println("Failed to connect to RabbitMQ")
+		fmt.Println(RMQConfig)
 		log.Fatal(err)
 	}
 	defer conn.Close()
