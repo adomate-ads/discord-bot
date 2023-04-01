@@ -11,7 +11,7 @@ COPY . .
 RUN go mod download
 
 # Build the application
-RUN go build -o main .
+RUN CGO_ENABLED=0 go build -o main .
 
 # Use the light weight alpine image as the base image
 FROM alpine:3.17.2
@@ -24,6 +24,7 @@ COPY --from=builder /app/main .
 
 # Expose port 3000 to the host
 EXPOSE 3000
+ENV PROD="true"
 
 # Run the application
 CMD ["./main"]

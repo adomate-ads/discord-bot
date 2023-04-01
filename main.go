@@ -22,7 +22,7 @@ type RabbitMQConfig struct {
 
 func main() {
 	err := godotenv.Load(".env")
-	if err != nil {
+	if err != nil && os.Getenv("PROD") != "true" {
 		log.Fatalf("Error loading .env file.")
 	}
 
