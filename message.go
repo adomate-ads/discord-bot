@@ -3,14 +3,16 @@ package main
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"log"
+	"os"
 	"strings"
 	"time"
 )
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	prefix := "!"
 
 	// Ignore all messages created by the bot itself
-	// This isn't required in this specific example but it's a good practice.
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
@@ -19,31 +21,46 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if strings.HasPrefix(m.Content, "!") {
-		err := checkAndAddReaction(s, m.Message, "🤖")
+	if strings.HasPrefix(m.Content, prefix) {
+		emoji := os.Getenv("REACTION")
+
+		err := s.MessageReactionAdd(m.ChannelID, m.ID, emoji)
 		if err != nil {
-			fmt.Println("Error:", err)
+			log.Println("Error adding reaction:", err)
 			return
 		}
 
-		command := strings.TrimPrefix(m.Content, "!")
+		time.Sleep(1 * time.Second) // Wait for other instance's reaction
 
-		switch command {
-		case "status":
-			_, err := s.ChannelMessageSend(m.ChannelID, "I'm alive!")
-			if err != nil {
-				fmt.Println("Error:", err)
+		reactions, err := s.MessageReactions(m.ChannelID, m.ID, emoji, 2, "", "")
+		if err != nil {
+			log.Println("Error fetching reactions:", err)
+			return
+		}
+
+		if len(reactions) > 0 && reactions[0].ID == s.State.User.ID {
+			command := strings.TrimPrefix(m.Content, prefix)
+
+			switch command {
+			case "status":
+				_, err := s.ChannelMessageSend(m.ChannelID, "I'm alive!")
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
+			case "isdown":
+				_, err := s.ChannelMessageSend(m.ChannelID, "All services are operational.")
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
+			default:
+				_, err := s.ChannelMessageSend(m.ChannelID, "Invalid command.")
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
 			}
-		case "isdown":
-			_, err := s.ChannelMessageSend(m.ChannelID, "All services are operational.")
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-		default:
-			_, err := s.ChannelMessageSend(m.ChannelID, "Invalid command.")
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
+		} else {
+			// Remove the bot's own reaction if it didn't respond
+			_ = s.MessageReactionRemove(m.ChannelID, m.ID, emoji, s.State.User.ID)
 		}
 	}
 }
@@ -150,16 +167,5 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			}
 		}
 	})
-	return err
-}
-
-func checkAndAddReaction(s *discordgo.Session, m *discordgo.Message, reaction string) error {
-	for _, r := range m.Reactions {
-		if r.Emoji.Name == reaction && r.Count > 0 {
-			return fmt.Errorf("message already processed")
-		}
-	}
-
-	err := s.MessageReactionAdd(m.ChannelID, m.ID, reaction)
 	return err
 }
