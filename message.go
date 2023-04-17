@@ -38,15 +38,15 @@ type Message struct {
 	Origin     string    `json:"origin" example:"api/gac"`
 }
 
-/* message example
-{
-"type":"Error",
-"message":"test",
-"suggestion":"lol",
-"origin":"api",
-"time":"2018-12-12T11:45:26.371Z"
-}
-*/
+	/* message example
+	{
+	"type":"Error",
+	"message":"test",
+	"suggestion":"lol",
+	"origin":"api",
+	"time":"2018-12-12T11:45:26.371Z"
+	}
+	*/
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
 	embedFull := &discordgo.MessageEmbed{
@@ -94,43 +94,44 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	switch msg.Type {
 	case "Error":
 		embedFull.Color = 0xFF0000
-	case "Warn":
+	case "Warning":
 		embedFull.Color = 0xFFFF00
 	case "Success":
 		embedFull.Color = 0x00FF00
-	case "Log":
-		embedFull.Color = 0x0000FF
 	default:
-		embedFull.Color = 0x000000
+		embedFull.Color = 0xFFFFFF
 	}
-
-	message := &discordgo.MessageSend{
-		Embeds: []*discordgo.MessageEmbed{
-			embedFull,
-		},
-		Components: []discordgo.MessageComponent{
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.Button{
-						Label:    "Delete Message",
-						Style:    discordgo.DangerButton,
-						Disabled: false,
-						CustomID: "response_delete",
+	if msg.Type == "Log" {
+		_, err := s.ChannelMessageSend(channelID, "``` ["+msg.Time.Format("02 Jan 06 15:04:01 CDT")+"] "+msg.Message+"```")
+		return err
+	} else {
+		message := &discordgo.MessageSend{
+			Embeds: []*discordgo.MessageEmbed{
+				embedFull,
+			},
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.Button{
+							Label:    "Delete Message",
+							Style:    discordgo.DangerButton,
+							Disabled: false,
+							CustomID: "response_delete",
+						},
 					},
 				},
 			},
-		},
-	}
-
-	sentMsg, err := s.ChannelMessageSendComplex(channelID, message)
-
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
-			err := s.ChannelMessageDelete(channelID, sentMsg.ID)
-			if err != nil {
-				fmt.Println("Error occurred during deletion:", err)
-			}
 		}
-	})
-	return err
+		sentMsg, err := s.ChannelMessageSendComplex(channelID, message)
+
+		s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
+				err := s.ChannelMessageDelete(channelID, sentMsg.ID)
+				if err != nil {
+					fmt.Println("Error occurred during deletion:", err)
+				}
+			}
+		})
+		return err
+	}
 }
