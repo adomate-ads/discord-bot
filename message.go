@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"hash/fnv"
 	"log"
 	"os"
 	"strings"
@@ -22,7 +23,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if strings.HasPrefix(m.Content, prefix) {
-		emoji := os.Getenv("REACTION")
+		podName := os.Getenv("POD_NAME")
+		emoji := generateInstanceEmoji(podName)
 
 		err := s.MessageReactionAdd(m.ChannelID, m.ID, emoji)
 		if err != nil {
@@ -85,7 +87,7 @@ type Message struct {
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
 	embedFull := &discordgo.MessageEmbed{
-		Author:      &discordgo.MessageEmbedAuthor{Name: "AdomateHelpDesk"},
+		Author:      &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
 		Color:       0x800000, // Maroon - should change later based on message
 		Description: fmt.Sprintf("%s from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
@@ -168,4 +170,21 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		}
 	})
 	return err
+}
+
+func generateInstanceEmoji(podName string) string {
+	hash := fnv.New32a()
+	_, _ = hash.Write([]byte(podName))
+
+	emojis := []string{
+		"🟥",
+		"🟦",
+		"🟩",
+		"🟨",
+		"🟧",
+		"🟪",
+		"🟫",
+	}
+
+	return emojis[hash.Sum32()%uint32(len(emojis))]
 }
