@@ -49,6 +49,9 @@ type Message struct {
 	*/
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
+
+	unixTime := msg.Time.Unix()
+	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
 	embedFull := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "AdomateHelpDesk"},
 		Color:       0x800000, // Maroon - should change later based on message
@@ -86,7 +89,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			},
 		},
 		Footer: &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("Time: %s", msg.Time.Format("02 Jan 06 15:04:01 CDT")),
+			Text: fmt.Sprintf("Time: %s", timestampStr),
 		},
 	}
 
@@ -102,7 +105,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		embedFull.Color = 0xFFFFFF
 	}
 	if msg.Type == "Log" {
-		_, err := s.ChannelMessageSend(channelID, "``` ["+msg.Time.Format("02 Jan 06 15:04:01 CDT")+"] "+msg.Message+"```")
+		_, err := s.ChannelMessageSend(channelID, " ["+timestampStr+"] "+msg.Message)
 		return err
 	} else {
 		message := &discordgo.MessageSend{
