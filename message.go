@@ -40,17 +40,16 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			status, err := getStatus("https://betteruptime.com/api/v2/monitors?url=https://www.adomate.ai")
 			switch status {
 			case "200 OK":
-				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is operational.")
+				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is operational.\nCode: " + status)
 				if err != nil {
 					fmt.Println("Error:", err)
 				}
 			default:
-				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is having issues.")
+				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is having issues.\nError Code: " + status)
 				if err != nil {
 					fmt.Println("Error:", err)
 				}
 			}
-			s.ChannelMessageSend(m.ChannelID, status)
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
@@ -58,17 +57,16 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			status, err := getStatus("https://betteruptime.com/api/v2/monitors?url=https://api.adomate.ai/v1/")
 			switch status {
 			case "200 OK":
-				_, err := s.ChannelMessageSend(m.ChannelID, "API is operational.")
+				_, err := s.ChannelMessageSend(m.ChannelID, "API is operational.\nCode: " + status)
 				if err != nil {
 					fmt.Println("Error:", err)
 				}
 			default:
-				_, err := s.ChannelMessageSend(m.ChannelID, "API is having issues.")
+				_, err := s.ChannelMessageSend(m.ChannelID, "API is having issues.\nError Code: " + status)
 				if err != nil {
 					fmt.Println("Error:", err)
 				}
 			}
-			s.ChannelMessageSend(m.ChannelID, status)
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
