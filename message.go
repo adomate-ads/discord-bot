@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -30,17 +32,48 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		switch command {
 		case "status":
-			_, err := s.ChannelMessageSend(m.ChannelID, "I'm alive!")
+			_, err := s.ChannelMessageSend(m.ChannelID, "Adomate Bot is operational.")
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
-		case "isdown":
-			_, err := s.ChannelMessageSend(m.ChannelID, "All services are operational.")
+		case "frontend":
+			status, err := getStatus("https://betteruptime.com/api/v2/monitors?url=https://www.adomate.ai")
+			switch status {
+			case "200 OK":
+				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is operational.")
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
+			default:
+				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is having issues.")
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
+			}
+			s.ChannelMessageSend(m.ChannelID, status)
+			if err != nil {
+				fmt.Println("Error:", err)
+			}
+		case "api":
+			status, err := getStatus("https://betteruptime.com/api/v2/monitors?url=https://api.adomate.ai/v1/")
+			switch status {
+			case "200 OK":
+				_, err := s.ChannelMessageSend(m.ChannelID, "API is operational.")
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
+			default:
+				_, err := s.ChannelMessageSend(m.ChannelID, "API is having issues.")
+				if err != nil {
+					fmt.Println("Error:", err)
+				}
+			}
+			s.ChannelMessageSend(m.ChannelID, status)
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
 		default:
-			_, err := s.ChannelMessageSend(m.ChannelID, "Invalid command.")
+			_, err := s.ChannelMessageSend(m.ChannelID, "Invalid command Available commands: !status, !frontend, !api")
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
@@ -56,7 +89,8 @@ type Message struct {
 	Origin     string    `json:"origin" example:"api/gac"`
 }
 
-	/* message example
+/*
+	message example
 	{
 	"type":"Error",
 	"message":"test",
@@ -64,14 +98,14 @@ type Message struct {
 	"origin":"api",
 	"time":"2018-12-12T11:45:26.371Z"
 	}
-	*/
+*/
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
 
 	unixTime := msg.Time.Unix()
 	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
 	embedFull := &discordgo.MessageEmbed{
-		Author:      &discordgo.MessageEmbedAuthor{Name: "AdomateHelpDesk"},
+		Author:      &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
 		Color:       0x800000, // Maroon - should change later based on message
 		Description: fmt.Sprintf("%s from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
@@ -155,6 +189,24 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		})
 		return err
 	}
+}
+
+func getStatus(url string) (string, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+os.Getenv("BETTERSTACK_TOKEN"))
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
+	}
+	return resp.Status, nil
 }
 
 func checkAndAddReaction(s *discordgo.Session, m *discordgo.Message, reaction string) error {
