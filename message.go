@@ -40,12 +40,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			status, err := getStatus("https://betteruptime.com/api/v2/monitors?url=https://www.adomate.ai")
 			switch status {
 			case "200 OK":
-				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is operational.\nCode: " + status)
+				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is operational.\nCode: "+status)
 				if err != nil {
 					fmt.Println("Error:", err)
 				}
 			default:
-				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is having issues.\nError Code: " + status)
+				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is having issues.\nError Code: "+status)
 				if err != nil {
 					fmt.Println("Error:", err)
 				}
@@ -57,12 +57,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			status, err := getStatus("https://betteruptime.com/api/v2/monitors?url=https://api.adomate.ai/v1/")
 			switch status {
 			case "200 OK":
-				_, err := s.ChannelMessageSend(m.ChannelID, "API is operational.\nCode: " + status)
+				_, err := s.ChannelMessageSend(m.ChannelID, "API is operational.\nCode: "+status)
 				if err != nil {
 					fmt.Println("Error:", err)
 				}
 			default:
-				_, err := s.ChannelMessageSend(m.ChannelID, "API is having issues.\nError Code: " + status)
+				_, err := s.ChannelMessageSend(m.ChannelID, "API is having issues.\nError Code: "+status)
 				if err != nil {
 					fmt.Println("Error:", err)
 				}
@@ -176,12 +176,14 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 			},
 		}
 		sentMsg, err := s.ChannelMessageSendComplex(channelID, message)
-
+		fmt.Println("Message sent successfully", sentMsg.ID)
 		s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
-				err := s.ChannelMessageDelete(channelID, sentMsg.ID)
+				err := s.ChannelMessageDelete(channelID, i.Message.ID)
 				if err != nil {
 					fmt.Println("Error occurred during deletion:", err)
+				} else {
+					fmt.Println("Message deleted successfully", i.Message.ID)
 				}
 			}
 		})
