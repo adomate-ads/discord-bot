@@ -39,7 +39,7 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 
 ## Commands
  `!status` - provides status for the bot 
-
+ `!frontend` - provides status for adomate.ai
  `!isdown` - provides status for the Adomate API
  
 > More Commands Coming Soon...
