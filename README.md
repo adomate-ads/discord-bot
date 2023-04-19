@@ -38,10 +38,16 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 - RABBIT_DISCORD_QUEUE - RabbitMQ queue name
 
 ## Commands
+To Activate commands for the Adomate Bot, Send an `Activate` message on the channel.
+
  `/welcome' - Howdy!
+ 
  `/status` - provides status for the bot 
+ 
  `/frontend` - provides status for adomate.ai
+ 
  `/isdown` - provides status for the Adomate API
+ 
 
 > More Commands Coming Soon...
 
@@ -83,7 +89,7 @@ RabbitMQ queue takes in the following message format to send messages to the dis
 {
 "type":"Error",
 "message":"API server down",
-"suggestion":"contact AdomateHelpDesk",
+"suggestion":"contact Adomate Support support@adomate.ai",
 "origin":"API",
 "time":"2023-03-10T11:45:26.371Z"
 }
