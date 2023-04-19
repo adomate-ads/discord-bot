@@ -75,9 +75,9 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 		var content string
 		if status == "200 OK" {
-			content = "API is operational. " + status
+			content = "API is operational.\nCode: " + status
 		} else {
-			content = "API is having issues. " + status
+			content = "API is having issues.\nError Code: " + status
 		}
 
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -96,9 +96,9 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 		var content string
 		if status == "200 OK" {
-			content = "Frontend is operational. " + status
+			content = "Frontend is operational.\nCode: " + status
 		} else {
-			content = "Frointend is having issues. " + status
+			content = "Frointend is having issues.\nError Code: " + status
 		}
 
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
