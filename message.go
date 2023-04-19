@@ -147,7 +147,6 @@ type Message struct {
 */
 
 func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
-
 	unixTime := msg.Time.Unix()
 	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
 	embedFull := &discordgo.MessageEmbed{
@@ -206,34 +205,59 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		_, err := s.ChannelMessageSend(channelID, " ["+timestampStr+"] "+msg.Message)
 		return err
 	} else {
-		message := &discordgo.MessageSend{
-			Embeds: []*discordgo.MessageEmbed{
-				embedFull,
-			},
+		button := discordgo.Button{
+			Label:    "Delete",
+			Style:    discordgo.DangerButton,
+			CustomID: "delete_message",
+		}
+
+		actionRow := discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{&button},
+		}
+
+		messageSendData := &discordgo.MessageSend{
+			Content: "Incoming...",
+			Embed:   embedFull,
 			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.Button{
-							Label:    "Delete Message",
-							Style:    discordgo.DangerButton,
-							Disabled: false,
-							CustomID: "response_delete",
-						},
-					},
-				},
+				&actionRow,
 			},
 		}
-		_, err := s.ChannelMessageSendComplex(channelID, message)
-		s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
-				err := s.ChannelMessageDelete(channelID, i.Message.ID)
-				if err != nil {
-					fmt.Println("Error occurred during deletion:", err)
-				}
-			}
-		})
-		return err
+
+		_, err := s.ChannelMessageSendComplex(channelID, messageSendData)
+		if err != nil {
+			fmt.Println("Error sending message:", err)
+		}
+
+		//message := &discordgo.MessageSend{
+		//	Embeds: []*discordgo.MessageEmbed{
+		//		embedFull,
+		//	},
+		//	Components: []discordgo.MessageComponent{
+		//		discordgo.ActionsRow{
+		//			Components: []discordgo.MessageComponent{
+		//				discordgo.Button{
+		//					Label:    "Delete Message",
+		//					Style:    discordgo.DangerButton,
+		//					Disabled: false,
+		//					CustomID: "response_delete",
+		//				},
+		//			},
+		//		},
+		//	},
+		//}
+		//
+		//_, err := s.ChannelMessageSendComplex(channelID, message)
+		//s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		//	if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
+		//		err := s.ChannelMessageDelete(channelID, i.Message.ID)
+		//		if err != nil {
+		//			fmt.Println("Error occurred during deletion:", err)
+		//		}
+		//	}
+		//})
+		//return err
 	}
+	return nil
 }
 
 func getStatus(url string) (string, error) {
@@ -252,4 +276,20 @@ func getStatus(url string) (string, error) {
 		return "", fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
 	}
 	return resp.Status, nil
+}
+
+func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "delete_message" {
+		err := s.ChannelMessageDelete(i.ChannelID, i.Message.ID)
+		if err != nil {
+			fmt.Println("Error deleting message:", err)
+		}
+
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseDeferredMessageUpdate,
+		})
+		if err != nil {
+			fmt.Println("Error sending interaction response:", err)
+		}
+	}
 }
