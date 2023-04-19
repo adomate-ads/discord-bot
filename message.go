@@ -30,7 +30,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 func registerCommands(s *discordgo.Session, guildID string) error {
 	commands := []*discordgo.ApplicationCommand{
 		{
-			Name:        "Activate",
+			Name:        "activate",
 			Description: "Activate the bot",
 		},
 		{
