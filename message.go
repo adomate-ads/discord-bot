@@ -223,15 +223,12 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 				},
 			},
 		}
-		sentMsg, err := s.ChannelMessageSendComplex(channelID, message)
-		fmt.Println("Message sent successfully", sentMsg.ID)
+		_, err := s.ChannelMessageSendComplex(channelID, message)
 		s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
 				err := s.ChannelMessageDelete(channelID, i.Message.ID)
 				if err != nil {
 					fmt.Println("Error occurred during deletion:", err)
-				} else {
-					fmt.Println("Message deleted successfully", i.Message.ID)
 				}
 			}
 		})
