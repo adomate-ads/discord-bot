@@ -254,14 +254,3 @@ func getStatus(url string) (string, error) {
 	}
 	return resp.Status, nil
 }
-
-// func checkAndAddReaction(s *discordgo.Session, m *discordgo.Message, reaction string) error {
-// 	for _, r := range m.Reactions {
-// 		if r.Emoji.Name == reaction && r.Count > 0 {
-// 			return fmt.Errorf("message already processed")
-// 		}
-// 	}
-
-// 	err := s.MessageReactionAdd(m.ChannelID, m.ID, reaction)
-// 	return err
-// }
