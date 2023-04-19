@@ -5,12 +5,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	prefix := "!"
 
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
@@ -21,62 +19,97 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if strings.HasPrefix(m.Content, prefix) {
-		err := checkAndAddReaction(s, m.Message, "🤖")
-		if err != nil {
-			fmt.Println("Error:", err)
-			return
-		}
-
-		command := strings.TrimPrefix(m.Content, prefix)
-
-		switch command {
-		case "status":
-			_, err := s.ChannelMessageSend(m.ChannelID, "Adomate Bot is operational.")
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-		case "frontend":
-			status, err := getStatus("https://betteruptime.com/api/v2/monitors?url=https://www.adomate.ai")
-			switch status {
-			case "200 OK":
-				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is operational.\nCode: " + status)
-				if err != nil {
-					fmt.Println("Error:", err)
-				}
-			default:
-				_, err := s.ChannelMessageSend(m.ChannelID, "Frontend is having issues.\nError Code: " + status)
-				if err != nil {
-					fmt.Println("Error:", err)
-				}
-			}
+	_, err := s.ApplicationCommandBulkOverwrite(os.Getenv("APP_ID"), m.GuildID, []*discordgo.ApplicationCommand{
+		{
+			Name:        "Welcome",
+			Description: "HOWDY",
+		},
+		{
+			Name:        "api",
+			Description: "Check API status",
+		},
+		{
+			Name:        "frontend",
+			Description: "Check Frontend status",
+		},
+		{
+			Name:        "status",
+			Description: "Check Bot status",
+		},
+	})
+	if err != nil {
+		// Handle the error
+		fmt.Println("Error:", err)
+	}
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		data := i.ApplicationCommandData()
+		switch data.Name {
+		case "Welcome":
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Howdy!",
+				},
+			})
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
 		case "api":
-			status, err := getStatus("https://betteruptime.com/api/v2/monitors?url=https://api.adomate.ai/v1/")
-			switch status {
-			case "200 OK":
-				_, err := s.ChannelMessageSend(m.ChannelID, "API is operational.\nCode: " + status)
-				if err != nil {
-					fmt.Println("Error:", err)
-				}
-			default:
-				_, err := s.ChannelMessageSend(m.ChannelID, "API is having issues.\nError Code: " + status)
-				if err != nil {
-					fmt.Println("Error:", err)
-				}
+			status, err := getStatus("https://api.adomate.com/api/v1/")
+			if err != nil {
+				fmt.Println("Error:", err)
 			}
+			var content string
+			if status == "200 OK" {
+				content = "API is operational. " + status
+			} else {
+				content = "API is having issues. " + status
+			}
+
+			err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+				},
+			})
+			if err2 != nil {
+				fmt.Println("Error:", err)
+			}
+		case "frontend":
+			status, err := getStatus("https://api.adomate.com/api/v1/")
+			if err != nil {
+				fmt.Println("Error:", err)
+			}
+			var content string
+			if status == "200 OK" {
+				content = "API is operational. " + status
+			} else {
+				content = "API is having issues. " + status
+			}
+
+			err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+				},
+			})
+			if err2 != nil {
+				fmt.Println("Error:", err)
+			}
+		case "status":
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Adomate Bot is operational.",
+				},
+			})
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
 		default:
-			_, err := s.ChannelMessageSend(m.ChannelID, "Invalid command Available commands: !status, !frontend, !api")
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
+			fmt.Println("Unknown command")
 		}
-	}
+	})
 }
 
 type Message struct {
@@ -207,13 +240,13 @@ func getStatus(url string) (string, error) {
 	return resp.Status, nil
 }
 
-func checkAndAddReaction(s *discordgo.Session, m *discordgo.Message, reaction string) error {
-	for _, r := range m.Reactions {
-		if r.Emoji.Name == reaction && r.Count > 0 {
-			return fmt.Errorf("message already processed")
-		}
-	}
+// func checkAndAddReaction(s *discordgo.Session, m *discordgo.Message, reaction string) error {
+// 	for _, r := range m.Reactions {
+// 		if r.Emoji.Name == reaction && r.Count > 0 {
+// 			return fmt.Errorf("message already processed")
+// 		}
+// 	}
 
-	err := s.MessageReactionAdd(m.ChannelID, m.ID, reaction)
-	return err
-}
+// 	err := s.MessageReactionAdd(m.ChannelID, m.ID, reaction)
+// 	return err
+// }
