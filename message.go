@@ -9,8 +9,6 @@ import (
 )
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-
-	// Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
@@ -19,10 +17,21 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	_, err := s.ApplicationCommandBulkOverwrite(os.Getenv("APP_ID"), m.GuildID, []*discordgo.ApplicationCommand{
+	err := registerCommands(s, m.GuildID)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		handleInteraction(s, i)
+	})
+}
+
+func registerCommands(s *discordgo.Session, guildID string) error {
+	commands := []*discordgo.ApplicationCommand{
 		{
-			Name:        "Welcome",
-			Description: "HOWDY",
+			Name:        "welcome",
+			Description: "HOWDY!",
 		},
 		{
 			Name:        "api",
@@ -36,80 +45,82 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			Name:        "status",
 			Description: "Check Bot status",
 		},
-	})
-	if err != nil {
-		// Handle the error
-		fmt.Println("Error:", err)
 	}
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		data := i.ApplicationCommandData()
-		switch data.Name {
-		case "Welcome":
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Howdy!",
-				},
-			})
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-		case "api":
-			status, err := getStatus("https://api.adomate.com/api/v1/")
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-			var content string
-			if status == "200 OK" {
-				content = "API is operational. " + status
-			} else {
-				content = "API is having issues. " + status
-			}
+	_, err := s.ApplicationCommandBulkOverwrite(os.Getenv("APP_ID"), guildID, commands)
+	if err != nil {
+		return err
+	}
 
-			err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: content,
-				},
-			})
-			if err2 != nil {
-				fmt.Println("Error:", err)
-			}
-		case "frontend":
-			status, err := getStatus("https://api.adomate.com/api/v1/")
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-			var content string
-			if status == "200 OK" {
-				content = "API is operational. " + status
-			} else {
-				content = "API is having issues. " + status
-			}
+	fmt.Println("Commands registered successfully!")
+	return nil
+}
 
-			err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: content,
-				},
-			})
-			if err2 != nil {
-				fmt.Println("Error:", err)
-			}
-		case "status":
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Adomate Bot is operational.",
-				},
-			})
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-		default:
-			fmt.Println("Unknown command")
+func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	data := i.ApplicationCommandData()
+	switch data.Name {
+	case "welcome":
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Howdy!",
+			},
+		})
+		if err != nil {
+			fmt.Println("Error:", err)
 		}
-	})
+	case "api":
+		status, err := getStatus("https://api.adomate.ai/v1/")
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+		var content string
+		if status == "200 OK" {
+			content = "API is operational. " + status
+		} else {
+			content = "API is having issues. " + status
+		}
+
+		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: content,
+			},
+		})
+		if err2 != nil {
+			fmt.Println("Error:", err)
+		}
+	case "frontend":
+		status, err := getStatus("https://www.adomate.ai/")
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+		var content string
+		if status == "200 OK" {
+			content = "Frontend is operational. " + status
+		} else {
+			content = "Frointend is having issues. " + status
+		}
+
+		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: content,
+			},
+		})
+		if err2 != nil {
+			fmt.Println("Error:", err)
+		}
+	case "status":
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Adomate Bot is operational.",
+			},
+		})
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+	}
 }
 
 type Message struct {
