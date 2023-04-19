@@ -183,7 +183,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 				if err != nil {
 					fmt.Println("Error occurred during deletion:", err)
 				} else {
-					fmt.Println("Message deleted successfully", i.Message.ID)
+					fmt.Println("Message deleted successfully ", i.Message.ID)
 				}
 			}
 		})
