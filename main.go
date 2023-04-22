@@ -39,7 +39,6 @@ func main() {
 	err = registerCommands(discord, os.Getenv("GUILD_ID"))
 	if err != nil {
 		fmt.Println("Error registering commands: ", err)
-		return
 	}
 
 	// In this example, we only care about receiving message events.
