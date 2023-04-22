@@ -16,9 +16,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(m.Content) == 0 {
 		return
 	}
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		handleInteraction(s, i)
-	})
 }
 
 func registerCommands(s *discordgo.Session, guildID string) error {
@@ -45,11 +42,13 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 		return err
 	}
 
-	fmt.Println("Commands registered successfully!")
 	return nil
 }
 
 func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.Type == discordgo.InteractionMessageComponent {
+		return
+	}
 	data := i.ApplicationCommandData()
 	switch data.Name {
 	case "welcome":
@@ -206,7 +205,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		}
 
 		messageSendData := &discordgo.MessageSend{
-			Content: "Incoming...",
+			Content: msg.Type + " message from " + msg.Origin,
 			Embed:   embedFull,
 			Components: []discordgo.MessageComponent{
 				&actionRow,
