@@ -141,7 +141,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	embedFull := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
 		Color:       0x800000, // Maroon - should change later based on message
-		Description: fmt.Sprintf("%s from %s", msg.Type, msg.Origin),
+		Description: fmt.Sprintf("%s message from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "Type: ",
@@ -205,7 +205,6 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		}
 
 		messageSendData := &discordgo.MessageSend{
-			Content: msg.Type + " message from " + msg.Origin,
 			Embed:   embedFull,
 			Components: []discordgo.MessageComponent{
 				&actionRow,
