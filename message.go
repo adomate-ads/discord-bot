@@ -16,23 +16,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(m.Content) == 0 {
 		return
 	}
-
-	err := registerCommands(s, m.GuildID)
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		handleInteraction(s, i)
-	})
 }
 
 func registerCommands(s *discordgo.Session, guildID string) error {
 	commands := []*discordgo.ApplicationCommand{
-		{
-			Name:        "activate",
-			Description: "Activate the bot",
-		},
 		{
 			Name:        "welcome",
 			Description: "HOWDY!",
@@ -55,11 +42,13 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 		return err
 	}
 
-	fmt.Println("Commands registered successfully!")
 	return nil
 }
 
 func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.Type == discordgo.InteractionMessageComponent {
+		return
+	}
 	data := i.ApplicationCommandData()
 	switch data.Name {
 	case "welcome":
@@ -152,7 +141,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	embedFull := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
 		Color:       0x800000, // Maroon - should change later based on message
-		Description: fmt.Sprintf("%s from %s", msg.Type, msg.Origin),
+		Description: fmt.Sprintf("%s message from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:   "Type: ",
@@ -216,7 +205,6 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		}
 
 		messageSendData := &discordgo.MessageSend{
-			Content: "Incoming...",
 			Embed:   embedFull,
 			Components: []discordgo.MessageComponent{
 				&actionRow,
@@ -227,35 +215,6 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		if err != nil {
 			fmt.Println("Error sending message:", err)
 		}
-
-		//message := &discordgo.MessageSend{
-		//	Embeds: []*discordgo.MessageEmbed{
-		//		embedFull,
-		//	},
-		//	Components: []discordgo.MessageComponent{
-		//		discordgo.ActionsRow{
-		//			Components: []discordgo.MessageComponent{
-		//				discordgo.Button{
-		//					Label:    "Delete Message",
-		//					Style:    discordgo.DangerButton,
-		//					Disabled: false,
-		//					CustomID: "response_delete",
-		//				},
-		//			},
-		//		},
-		//	},
-		//}
-		//
-		//_, err := s.ChannelMessageSendComplex(channelID, message)
-		//s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		//	if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "response_delete" {
-		//		err := s.ChannelMessageDelete(channelID, i.Message.ID)
-		//		if err != nil {
-		//			fmt.Println("Error occurred during deletion:", err)
-		//		}
-		//	}
-		//})
-		//return err
 	}
 	return nil
 }

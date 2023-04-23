@@ -31,6 +31,8 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 
 - DISCORD_BOT_TOKEN - Produced by the Discord Developers Portal
 - CHANNEL_ID - Can be obtained from the server channel
+- GUILD_ID - Server ID
+- BETTERSTACK_TOKEN - BetterStack API to get status 
 - RABBIT_HOST - localhost or url for the RabbitMQ server
 - RABBIT_PORT - 15672 by default
 - RABBIT_USER - RabbitMQ Username
@@ -40,13 +42,13 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 ## Commands
 To Activate commands for the Adomate Bot, Send an `Activate` message on the channel.
 
- `/welcome' - Howdy!
+ `/welcome` - Howdy!
  
  `/status` - provides status for the bot 
  
  `/frontend` - provides status for adomate.ai
  
- `/isdown` - provides status for the Adomate API
+ `/api` - provides status for the Adomate API
  
 
 > More Commands Coming Soon...
