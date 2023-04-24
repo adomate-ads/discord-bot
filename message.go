@@ -36,6 +36,10 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 			Name:        "status",
 			Description: "Check Bot status",
 		},
+		{
+			Name:        "ping",
+			Description: "Check Bot latency",
+		},
 	}
 	_, err := s.ApplicationCommandBulkOverwrite(os.Getenv("APP_ID"), guildID, commands)
 	if err != nil {
@@ -55,7 +59,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Howdy!",
+				Content: "Howdy " + i.Member.User.Username + "!",
 			},
 		})
 		if err != nil {
@@ -113,6 +117,16 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
+	case "ping":
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Bot Latency: "+ getLatency(),
+			},
+		})
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
 	}
 }
 
@@ -127,11 +141,11 @@ type Message struct {
 /*
 	message example
 	{
-	"type":"Error",
-	"message":"test",
-	"suggestion":"lol",
-	"origin":"api",
-	"time":"2018-12-12T11:45:26.371Z"
+	"type":"Error/Warning/Success/Log",
+	"message":"Add Message",
+	"suggestion":"Add Suggestion",
+	"origin":"API",
+	"time":"2023-04-24T08:45:26.371Z"
 	}
 */
 
@@ -251,4 +265,10 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			fmt.Println("Error sending interaction response:", err)
 		}
 	}
+}
+
+func getLatency() string {
+	startTime:= time.Now()
+	latency := time.Since(startTime)
+	return latency.String()
 }

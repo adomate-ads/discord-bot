@@ -44,13 +44,15 @@ To Activate commands for the Adomate Bot, Send an `Activate` message on the chan
 
  `/welcome` - Howdy!
  
+ `/ping` - provides bot latency
+ 
  `/status` - provides status for the bot 
  
  `/frontend` - provides status for adomate.ai
  
  `/api` - provides status for the Adomate API
- 
 
+ 
 > More Commands Coming Soon...
 
 ## Message Format
