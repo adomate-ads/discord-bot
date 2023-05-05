@@ -117,16 +117,6 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
-	case "ping":
-		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Bot Latency: "+ getLatency(),
-			},
-		})
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
 	}
 }
 
@@ -219,7 +209,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		}
 
 		messageSendData := &discordgo.MessageSend{
-			Embed:   embedFull,
+			Embed: embedFull,
 			Components: []discordgo.MessageComponent{
 				&actionRow,
 			},
@@ -265,10 +255,4 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			fmt.Println("Error sending interaction response:", err)
 		}
 	}
-}
-
-func getLatency() string {
-	startTime:= time.Now()
-	latency := time.Since(startTime)
-	return latency.String()
 }
