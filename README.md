@@ -43,9 +43,7 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 To Activate commands for the Adomate Bot, Send an `Activate` message on the channel.
 
  `/welcome` - Howdy!
- 
- `/ping` - provides bot latency
- 
+  
  `/status` - provides status for the bot 
  
  `/frontend` - provides status for adomate.ai
