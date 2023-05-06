@@ -23,13 +23,20 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 	commands := []*discordgo.ApplicationCommand{
 		{
 			Name:        "welcome",
-			Description: "HOWDY!",
+			Description: "Howdy! Welcome to Adomate!\n Let's get you started!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "department",
 					Description: "What department are you in?",
 					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "icebreaker",
+					Description: "Share an interesting fact about yourself!",
+					Required:    false,
+					// TODO send this message to #introductions channel
 				},
 			},
 		},
@@ -66,30 +73,37 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		department = strings.ToLower(department)
 		departmentMsg := ""
 		departmentDesc := ""
+		roleEmote := ""
 		switch department {
 		case "engineering":
 			departmentMsg = "Engineering"
-			departmentDesc = "Head of Department: Engineering Department has access to all the engineering channels in the server. Please read the rules and regulations of the server before posting anything. For starters, please introduce yourself in the `#introductions` channel.\n**Important Guidelines** \n 1. Be respectful \n 2. Respect Privacy \n 3. Have Fun!\nIf you have any questions, please contact the moderators.\nWe wish you a great time at Adomate!"
+			departmentDesc = "Engineering Department has access to all the engineering channels in the server. Please read the rules and regulations of the server before posting anything.\n**Important Guidelines** \n 1. Be respectful \n 2. Respect Privacy \n 3. Have Fun!\nIf you have any questions, please contact the moderators.\nWe wish you a great time at Adomate!"
+			roleEmote = "🛠📋💻"
 		case "design":
 			departmentMsg = "Design"
 			departmentDesc = "Design Department has access to all the design channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
+			roleEmote = "📋🎨🖌"
 		case "marketing":
 			departmentMsg = "Marketing"
 			departmentDesc = "Marketing Department has access to all the marketing channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
+			roleEmote = "📋📣📈"
 		case "support":
 			departmentMsg = "Support"
 			departmentDesc = "Support Department has access to all the support channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
+			roleEmote = "📋📞📧"
 		case "hr":
 			departmentMsg = "HR"
 			departmentDesc = "HR Department has access to all the HR channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
+			roleEmote = "📋📝📧"
 		default:
 			departmentMsg = "Adomate"
 			departmentDesc = "Welcome to Adomate, to be placed in a department, please contact HR."
+			roleEmote = "<Adomate Emoji ID>"
 		}
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Howdy " + i.Member.User.Username + "!\nWelcome to the ***" + departmentMsg + "*** Department! 🥳\n\nMessage from the " + departmentMsg + " Department: \n" + departmentDesc,
+				Content: "Howdy " + i.Member.User.Username + "!\nWelcome to the ***" + departmentMsg + "*** Department!"+ roleEmote +"\n\nMessage from the " + departmentMsg + " Department: \n" + departmentDesc,
 			},
 		})
 		if err != nil {
