@@ -64,32 +64,32 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	case "welcome":
 		department := data.Options[0].StringValue()
 		department = strings.ToLower(department)
-		departmentmsg := ""
-		departmentdesc := ""
+		departmentMsg := ""
+		departmentDesc := ""
 		switch department {
 		case "engineering":
-			departmentmsg = "Engineering"
-			departmentdesc = "Head of Department: Engineering Department has access to all the engineering channels in the server. Please read the rules and regulations of the server before posting anything. For starters, please introduce yourself in the `#introductions` channel.\n**Important Guidelines** \n 1. Be respectful \n 2. Respect Privacy \n 3. Have Fun!\nIf you have any questions, please contact the moderators.\nWe wish you a great time at Adomate!"
+			departmentMsg = "Engineering"
+			departmentDesc = "Head of Department: Engineering Department has access to all the engineering channels in the server. Please read the rules and regulations of the server before posting anything. For starters, please introduce yourself in the `#introductions` channel.\n**Important Guidelines** \n 1. Be respectful \n 2. Respect Privacy \n 3. Have Fun!\nIf you have any questions, please contact the moderators.\nWe wish you a great time at Adomate!"
 		case "design":
-			departmentmsg = "Design"
-			departmentdesc = "Design Department has access to all the design channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
+			departmentMsg = "Design"
+			departmentDesc = "Design Department has access to all the design channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
 		case "marketing":
-			departmentmsg = "Marketing"
-			departmentdesc = "Marketing Department has access to all the marketing channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
+			departmentMsg = "Marketing"
+			departmentDesc = "Marketing Department has access to all the marketing channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
 		case "support":
-			departmentmsg = "Support"
-			departmentdesc = "Support Department has access to all the support channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
+			departmentMsg = "Support"
+			departmentDesc = "Support Department has access to all the support channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
 		case "hr":
-			departmentmsg = "HR"
-			departmentdesc = "HR Department has access to all the HR channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
+			departmentMsg = "HR"
+			departmentDesc = "HR Department has access to all the HR channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators."
 		default:
-			departmentmsg = "Adomate"
-			departmentdesc = "Welcome to Adomate, to be placed in a department, please contact HR."
+			departmentMsg = "Adomate"
+			departmentDesc = "Welcome to Adomate, to be placed in a department, please contact HR."
 		}
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Howdy " + i.Member.User.Username + "!\nWelcome to the ***" + departmentmsg + "*** Department! 🥳\n\nMessage from the " + departmentmsg + " Department: \n" + departmentdesc,
+				Content: "Howdy " + i.Member.User.Username + "!\nWelcome to the ***" + departmentMsg + "*** Department! 🥳\n\nMessage from the " + departmentMsg + " Department: \n" + departmentDesc,
 			},
 		})
 		if err != nil {
