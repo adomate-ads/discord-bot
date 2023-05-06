@@ -64,8 +64,8 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	case "welcome":
 		department := data.Options[0].StringValue()
 		department = strings.ToLower(department)
-		departmentmsg := "Adomate"  // default
-		departmentdesc := "Adomate" // default
+		departmentmsg := ""
+		departmentdesc := ""
 		switch department {
 		case "engineering":
 			departmentmsg = "Engineering"
