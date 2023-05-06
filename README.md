@@ -42,7 +42,7 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 ## Commands
 To Activate commands for the Adomate Bot, Send an `Activate` message on the channel.
 
- `/welcome` - Howdy!
+ `/welcome` - Howdy! Provide your department name to get access to your assigned channels and features.
   
  `/status` - provides status for the bot 
  
@@ -51,7 +51,7 @@ To Activate commands for the Adomate Bot, Send an `Activate` message on the chan
  `/api` - provides status for the Adomate API
 
  
-> More Commands Coming Soon...
+> More Commands Coming Soon... 
 
 ## Message Format
 

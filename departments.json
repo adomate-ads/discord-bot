@@ -1,0 +1,40 @@
+{
+    "departments": [
+      {
+        "name": "engineering",
+        "message": "Engineering",
+        "description": "Engineering Department has access to all the engineering channels in the server. Please read the rules and regulations of the server before posting anything.\n**Important Guidelines** \n 1. Be respectful \n 2. Respect Privacy \n 3. Have Fun!\nIf you have any questions, please contact the @moderators.\nWe wish you a great time at Adomate!",
+        "emote": "🛠📋💻"
+      },
+      {
+        "name": "design",
+        "message": "Design",
+        "description": "Design Department has access to all the design channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators.",
+        "emote": "📋🎨🖌"
+      },
+      {
+        "name": "marketing",
+        "message": "Marketing",
+        "description": "Marketing Department has access to all the marketing channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators.",
+        "emote": "📋📣📈"
+      },
+      {
+        "name": "support",
+        "message": "Support",
+        "description": "Support Department has access to all the support channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators.",
+        "emote": "📋📞📧"
+      },
+      {
+        "name": "hr",
+        "message": "HR",
+        "description": "HR Department has access to all the HR channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators.",
+        "emote": "📋📝📧"
+      }
+    ],
+    "default": {
+      "message": "Adomate",
+      "description": "Welcome to Adomate, to be placed in a department, please contact HR.",
+      "emote": "<Adomate Emoji ID>"
+    }
+  }
+  

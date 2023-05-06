@@ -1,13 +1,29 @@
 package main
 
 import (
+	// "encoding/json"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"net/http"
 	"os"
-	"time"
 	"strings"
+	"time"
 )
+/*
+	TODO Parse JSON file for departments
+*/
+type Department struct {
+	Name        string `json:"name"`
+	Message     string `json:"message"`
+	Description string `json:"description"`
+	Emote       string `json:"emote"`
+}
+
+type Config struct {
+	Departments []Department `json:"departments"`
+	Default     Department   `json:"default"`
+}
+
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
@@ -23,7 +39,7 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 	commands := []*discordgo.ApplicationCommand{
 		{
 			Name:        "welcome",
-			Description: "Howdy! Welcome to Adomate!\n Let's get you started!",
+			Description: "Howdy! Welcome to Adomate! Let's get you started!",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
@@ -36,7 +52,6 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 					Name:        "icebreaker",
 					Description: "Share an interesting fact about yourself!",
 					Required:    false,
-					// TODO send this message to #introductions channel
 				},
 			},
 		},
@@ -74,10 +89,11 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		departmentMsg := ""
 		departmentDesc := ""
 		roleEmote := ""
+
 		switch department {
 		case "engineering":
 			departmentMsg = "Engineering"
-			departmentDesc = "Engineering Department has access to all the engineering channels in the server. Please read the rules and regulations of the server before posting anything.\n**Important Guidelines** \n 1. Be respectful \n 2. Respect Privacy \n 3. Have Fun!\nIf you have any questions, please contact the moderators.\nWe wish you a great time at Adomate!"
+			departmentDesc = "Engineering Department has access to all the engineering channels in the server. Please read the rules and regulations of the server before posting anything.\n**Important Guidelines** \n 1. Be respectful \n 2. Respect Privacy \n 3. Have Fun!\nIf you have any questions, please contact the @moderators.\nWe wish you a great time at Adomate!"
 			roleEmote = "🛠📋💻"
 		case "design":
 			departmentMsg = "Design"
@@ -100,10 +116,28 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			departmentDesc = "Welcome to Adomate, to be placed in a department, please contact HR."
 			roleEmote = "<Adomate Emoji ID>"
 		}
+		icebreaker := ""
+		if len(data.Options) > 1 {
+			icebreaker = data.Options[1].StringValue()
+		}
+		if icebreaker == "" {
+			message := "Howdy @everyone! Welcome <@" + i.Member.User.ID + "> to Adomate!\nThey have joined the " + departmentMsg + " department!"
+			_, err := s.ChannelMessageSend(os.Getenv("INTRO_CHANNEL_ID"), message)
+			if err != nil {
+				fmt.Println("Error sending introduction channel message:", err)
+			}
+		} else {
+			message := "Howdy @everyone! Welcome <@" + i.Member.User.ID + "> to Adomate!\nFun Fact about " + i.Member.User.Username + ": " + icebreaker + "\nThey have joined the " + departmentMsg + " department!"
+			_, err := s.ChannelMessageSend(os.Getenv("INTRO_CHANNEL_ID"), message)
+			if err != nil {
+				fmt.Println("Error sending introduction channel message:", err)
+			}
+		}
+		
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Howdy " + i.Member.User.Username + "!\nWelcome to the ***" + departmentMsg + "*** Department!"+ roleEmote +"\n\nMessage from the " + departmentMsg + " Department: \n" + departmentDesc,
+				Content: "Howdy " + i.Member.User.Username + "!\nWelcome to the ***" + departmentMsg + "*** Department!" + roleEmote + "\n\nMessage from the " + departmentMsg + " Department: \n" + departmentDesc,
 			},
 		})
 		if err != nil {
@@ -139,7 +173,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if status == "200 OK" {
 			content = "Frontend is operational.\nCode: " + status
 		} else {
-			content = "Frointend is having issues.\nError Code: " + status
+			content = "Frontend is having issues.\nError Code: " + status
 		}
 
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
