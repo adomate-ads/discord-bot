@@ -36,7 +36,6 @@ func main() {
 	discord.AddHandler(messageCreate)
 	discord.AddHandler(interactionCreate)
 	discord.AddHandler(handleInteraction)
-	discord.AddHandler(updateRole)	
 	err = registerCommands(discord, os.Getenv("GUILD_ID"))
 	if err != nil {
 		fmt.Println("Error registering commands: ", err)
