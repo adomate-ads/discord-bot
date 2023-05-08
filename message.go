@@ -127,12 +127,17 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 		}
 		if departmentMsg == "" {
-			departmentMsg = departmentsData.Default.Message
-			departmentDesc = departmentsData.Default.Description
-			guidelines = departmentsData.Default.Guidelines
-			roleEmote = departmentsData.Default.Emote
-			roleID = departmentsData.Default.RoleID
-		}
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Flags:   1 << 6,
+					Content: "Howdy " + i.Member.User.Username + ", Please enter a valid department! or contact " + "<@&1104594618701590548>" + " for more information!",
+				},
+			})
+			if err != nil {
+				fmt.Println("Error:", err)
+			}
+		} else {
 		err = updateRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, roleID)
 		if err != nil {
 			fmt.Println("Error:", err)
@@ -165,6 +170,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if err2 != nil {
 			fmt.Println("Error:", err)
 		}
+	}
 	case "api":
 		if !hasRequiredRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, "Developer", "Support") {
 			if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -240,8 +246,8 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			fmt.Println("Error:", err)
 		}
 		embed := &discordgo.MessageEmbed{
-			Title:       "Adomate Status Dashboard",
-			Description: "Adomate status information",
+			Title:       "Adomate Status Dashboard - " + time.Now().Format("01-02-2006 15:04:05") + " CST",
+			Description: "Adomate status information <:AdomateLogo:1104587690139205713>",
 			Color:       0x637EFE,
 			Fields: []*discordgo.MessageEmbedField{
 				{
@@ -261,6 +267,8 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				},
 			},
 		}
+		embed.URL = os.Getenv("STATUS_URL")
+
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{

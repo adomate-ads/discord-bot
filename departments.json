@@ -29,7 +29,7 @@
             "message": "Support",
             "description": "Support Department has access to all the support channels in the server. Please read the rules and regulations of the server before posting anything. If you have any questions, please contact the moderators.",
             "guidelines": "Welcome to the Support Department!\n\nTo provide efficient and helpful support, we have some guidelines for you:\n\n1. Be responsive and attentive to user inquiries and issues.\n2. Maintain a professional and friendly tone while assisting users.\n3. Prioritize and escalate urgent or critical support requests.\n4. Keep user information confidential and ensure data privacy.\n5. Follow the server's code of conduct and rules.\n\nIf you have any questions or need assistance, please reach out to the support department moderators.\n\nLet's provide exceptional support to our users!",
-            "emote": "📋📞📧",
+            "emote": "📋:telephone:📧",
             "role_id": "1104616209263100035"
         },
         {
