@@ -131,7 +131,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Flags:   1 << 6,
-					Content: "Howdy " + i.Member.User.Username + ", Please enter a valid department! or contact " + "<@&1104594618701590548>" + " for more information!",
+					Content: "Howdy " + i.Member.User.Username + ", Please enter a valid department! or contact " + "<@&1104594618701590548>" + " for more information!", // TODO replace with new HR role id
 				},
 			})
 			if err != nil {
@@ -247,7 +247,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 		embed := &discordgo.MessageEmbed{
 			Title:       "Adomate Status Dashboard - " + time.Now().Format("01-02-2006 15:04:05") + " CST",
-			Description: "Adomate status information <:AdomateLogo:1104587690139205713>",
+			Description: "Adomate status information <:AdomateLogo:1104587690139205713>", // TODO change emoji ID
 			Color:       0x637EFE,
 			Fields: []*discordgo.MessageEmbedField{
 				{
@@ -485,14 +485,14 @@ func hasRequiredRole(s *discordgo.Session, guildID, userID string, roles ...stri
 }
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Hello, @everyone! The bot is back online. Thank you for your patience! <:AdomateLogo:1104587690139205713>")
+	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Hello, @everyone! The bot is back online. Thank you for your patience!\nTeam Adomate Bot <:AdomateLogo:1104587690139205713>") // TODO change to emoji ID
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
 }
 
 func sendClosingMessage(s *discordgo.Session) {
-	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Hello, @everyone! The bot is going down for maintenance. Please be patient while we work on it. Thank you! <:AdomateLogo:1104587690139205713>")
+	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Hello, @everyone! The bot is going down for maintenance. Please be patient while we work on it. Thank you!\nTeam Adomate Bot <:AdomateLogo:1104587690139205713>") // TODO change to emoji ID
 	if err != nil {
 		fmt.Println("Error	:", err)
 	}
