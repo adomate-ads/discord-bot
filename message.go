@@ -3,12 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/bwmarrin/discordgo"
 )
 
 type Department struct {
@@ -85,6 +84,10 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 		{
 			Name:        "status",
 			Description: "Check Bot status",
+		},
+		{
+			Name:        "help",
+			Description: "Get help with the bot",
 		},
 	}
 
@@ -228,6 +231,38 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Adomate Bot is operational.",
+			},
+		})
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+	case "help":
+		embed := &discordgo.MessageEmbed{
+			Title:       "Adomate Bot Help",
+			Description: "Adomate Bot is a bot that helps with Adomate's Discord Server.",
+			Color:       0x637EFE,
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:   "Commands",
+					Value:  "1. /welcome\n2. /api\n3. /frontend\n4. /status\n5. /help",
+					Inline: true,
+				},
+				{
+					Name:   "Description",
+					Value:  "Sends a welcome message.\nChecks the status of the API.\nChecks the status of the Frontend.\nChecks the status of the Adomate Bot.\nShows this help message.",
+					Inline: true,
+				},
+				{
+					Name:   "Usage",
+					Value: "#lobby channel\nDevelopers and Support\nDevelopers and Support\nAnyone\nAnyone",
+					Inline: true,
+				},
+			},
+		}
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: []*discordgo.MessageEmbed{embed},
 			},
 		})
 		if err != nil {
@@ -380,6 +415,7 @@ func updateRole(session *discordgo.Session, guildID string, userID string, roleI
 	}
 	return nil
 }
+
 func hasRequiredRole(s *discordgo.Session, guildID, userID string, roles ...string) bool {
 	guildRoles, err := s.GuildRoles(guildID)
 	if err != nil {
@@ -392,7 +428,6 @@ func hasRequiredRole(s *discordgo.Session, guildID, userID string, roles ...stri
 		fmt.Println("Error retrieving guild member information:", err)
 		return false
 	}
-
 	for _, roleID := range member.Roles {
 		for _, role := range guildRoles {
 			if role.ID == roleID {
@@ -404,6 +439,5 @@ func hasRequiredRole(s *discordgo.Session, guildID, userID string, roles ...stri
 			}
 		}
 	}
-
 	return false
 }
