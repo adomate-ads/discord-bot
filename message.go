@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 type Department struct {
@@ -102,8 +103,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	switch data.Name {
 	case "welcome":
-		department := data.Options[0].StringValue()
-		department = strings.ToLower(department)
+		department := strings.ToLower(data.Options[0].StringValue())
 		departmentMsg := ""
 		departmentDesc := ""
 		roleEmote := ""
@@ -163,46 +163,65 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			fmt.Println("Error:", err)
 		}
 	case "api":
-		status, err := getStatus("https://api.adomate.ai/v1/")
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
-		var content string
-		if status == "200 OK" {
-			content = "API is operational.\nCode: " + status
+		if !hasRequiredRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, "Developer", "Support") {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "You do not have permission to use this command.",
+				},
+			})
 		} else {
-			content = "API is having issues.\nError Code: " + status
-		}
+			status, err := getStatus("https://api.adomate.ai/v1/")
+			if err != nil {
+				fmt.Println("Error:", err)
+			}
+			var content string
+			if status == "200 OK" {
+				content = "API is operational.\nCode: " + status
+			} else {
+				content = "API is having issues.\nError Code: " + status
+			}
 
-		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: content,
-			},
-		})
-		if err2 != nil {
-			fmt.Println("Error:", err)
+			err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+				},
+			})
+			if err2 != nil {
+				fmt.Println("Error:", err)
+			}
 		}
 	case "frontend":
-		status, err := getStatus("https://www.adomate.ai/")
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
-		var content string
-		if status == "200 OK" {
-			content = "Frontend is operational.\nCode: " + status
+		if !hasRequiredRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, "Developer", "Support") {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "You do not have permission to use this command.",
+				},
+			})
+			return
 		} else {
-			content = "Frontend is having issues.\nError Code: " + status
-		}
+			status, err := getStatus("https://www.adomate.ai/")
+			if err != nil {
+				fmt.Println("Error:", err)
+			}
+			var content string
+			if status == "200 OK" {
+				content = "Frontend is operational.\nCode: " + status
+			} else {
+				content = "Frontend is having issues.\nError Code: " + status
+			}
 
-		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: content,
-			},
-		})
-		if err2 != nil {
-			fmt.Println("Error:", err)
+			err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+				},
+			})
+			if err2 != nil {
+				fmt.Println("Error:", err)
+			}
 		}
 	case "status":
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -360,4 +379,31 @@ func updateRole(session *discordgo.Session, guildID string, userID string, roleI
 		return err
 	}
 	return nil
+}
+func hasRequiredRole(s *discordgo.Session, guildID, userID string, roles ...string) bool {
+	guildRoles, err := s.GuildRoles(guildID)
+	if err != nil {
+		fmt.Println("Error retrieving guild roles:", err)
+		return false
+	}
+
+	member, err := s.GuildMember(guildID, userID)
+	if err != nil {
+		fmt.Println("Error retrieving guild member information:", err)
+		return false
+	}
+
+	for _, roleID := range member.Roles {
+		for _, role := range guildRoles {
+			if role.ID == roleID {
+				for _, requiredRole := range roles {
+					if role.Name == requiredRole {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	return false
 }
