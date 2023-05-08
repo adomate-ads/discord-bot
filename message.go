@@ -441,3 +441,19 @@ func hasRequiredRole(s *discordgo.Session, guildID, userID string, roles ...stri
 	}
 	return false
 }
+
+func onReady(s *discordgo.Session, r *discordgo.Ready) {
+	_, err := s.ChannelMessageSendComplex(os.Getenv("CHANNEL_ID"), &discordgo.MessageSend{
+		Content: "Bot is up and running! :)",
+	})
+	if err != nil {
+		fmt.Println("Error sending message:", err)
+	}
+}
+
+func sendClosingMessage(s *discordgo.Session) {
+	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Bot is going offline for scheduled maintenance. See you soon!")
+	if err != nil {
+		fmt.Println("Error sending closing message:", err)
+	}
+}

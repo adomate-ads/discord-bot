@@ -36,6 +36,7 @@ func main() {
 	discord.AddHandler(messageCreate)
 	discord.AddHandler(interactionCreate)
 	discord.AddHandler(handleInteraction)
+	discord.AddHandler(onReady)
 	err = registerCommands(discord, os.Getenv("GUILD_ID"))
 	if err != nil {
 		fmt.Println("Error registering commands: ", err)
@@ -132,9 +133,8 @@ func main() {
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM)
 	<-sc
-
-	// Cleanly close down the Discord session.
+	sendClosingMessage(discord)
 	discord.Close()
 }
