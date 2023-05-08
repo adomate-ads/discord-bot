@@ -83,7 +83,7 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 		},
 		{
 			Name:        "status",
-			Description: "Check Bot status",
+			Description: "Check status of all services",
 		},
 		{
 			Name:        "help",
@@ -135,7 +135,6 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 		err = updateRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, roleID)
 		if err != nil {
-			// Handle the error
 			fmt.Println("Error:", err)
 		}
 		icebreaker := ""
@@ -159,6 +158,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
+				Flags:   1 << 6,
 				Content: "Howdy " + i.Member.User.Username + "!\nWelcome to the ***" + departmentMsg + "*** Department!" + roleEmote + "\n\nMessage from the " + departmentMsg + " Department: \n" + departmentDesc + "\n\n" + guidelines + "\n\nHave a great time at Adomate!",
 			},
 		})
@@ -167,22 +167,24 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	case "api":
 		if !hasRequiredRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, "Developer", "Support") {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Content: "You do not have permission to use this command.",
 				},
-			})
+			}); err != nil {
+				fmt.Println("Error responding to interaction:", err)
+			}
 		} else {
-			status, err := getStatus("https://api.adomate.ai/v1/")
+			status, err := getStatus(os.Getenv("API_URL"))
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
 			var content string
 			if status == "200 OK" {
-				content = "API is operational.\nCode: " + status
+				content = "API is operational." + "```" + "\nCode: " + status + "```" + "\n" + os.Getenv("API_URL")
 			} else {
-				content = "API is having issues.\nError Code: " + status
+				content = "API is having issues." + "```" + "\nCode: " + status + "```" + "\n" + os.Getenv("API_URL")
 			}
 
 			err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -197,23 +199,25 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	case "frontend":
 		if !hasRequiredRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, "Developer", "Support") {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Content: "You do not have permission to use this command.",
 				},
-			})
+			}); err != nil {
+				fmt.Println("Error responding to interaction:", err)
+			}
 			return
 		} else {
-			status, err := getStatus("https://www.adomate.ai/")
+			status, err := getStatus(os.Getenv("FRONTEND_URL"))
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
 			var content string
 			if status == "200 OK" {
-				content = "Frontend is operational.\nCode: " + status
+				content = "Frontend is operational." + "```" + "\nCode: " + status + "```" + "\n" + os.Getenv("FRONTEND_URL")
 			} else {
-				content = "Frontend is having issues.\nError Code: " + status
+				content = "Frontend is having issues." + "```" + "\nCode: " + status + "```" + "\n" + os.Getenv("FRONTEND_URL")
 			}
 
 			err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -227,13 +231,43 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 		}
 	case "status":
-		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		frontendStatus, err := getStatus(os.Getenv("FRONTEND_URL"))
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+		apiStatus, err := getStatus(os.Getenv("API_URL"))
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+		embed := &discordgo.MessageEmbed{
+			Title:       "Adomate Status Dashboard",
+			Description: "Adomate status information",
+			Color:       0x637EFE,
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:   "Service",
+					Value:  "Frontend\nAPI\nBot",
+					Inline: true,
+				},
+				{
+					Name:   "Status",
+					Value:  frontendStatus + "\n" + apiStatus + "\n200 OK",
+					Inline: true,
+				},
+				{
+					Name:   "URL",
+					Value:  os.Getenv("FRONTEND_URL") + "\n" + os.Getenv("API_URL") + "\n" + os.Getenv("BOT_URL"),
+					Inline: true,
+				},
+			},
+		}
+		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Adomate Bot is operational.",
+				Embeds: []*discordgo.MessageEmbed{embed},
 			},
 		})
-		if err != nil {
+		if err2 != nil {
 			fmt.Println("Error:", err)
 		}
 	case "help":
@@ -249,12 +283,12 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				},
 				{
 					Name:   "Description",
-					Value:  "Sends a welcome message.\nChecks the status of the API.\nChecks the status of the Frontend.\nChecks the status of the Adomate Bot.\nShows this help message.",
+					Value:  "Sends a welcome message.\nChecks the status of the API.\nChecks the status of the Frontend.\nStatus dashboard for all services.\nShows this help message.",
 					Inline: true,
 				},
 				{
 					Name:   "Usage",
-					Value: "#lobby channel\nDevelopers and Support\nDevelopers and Support\nAnyone\nAnyone",
+					Value:  "#lobby channel\nDevelopers and Support\nDevelopers and Support\nAnyone\nAnyone",
 					Inline: true,
 				},
 			},
@@ -262,6 +296,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
+				Flags:  1 << 6,
 				Embeds: []*discordgo.MessageEmbed{embed},
 			},
 		})
@@ -295,7 +330,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
 	embedFull := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
-		Color:       0x800000, // Maroon - should change later based on message
+		Color:       0x800000, // Maroon
 		Description: fmt.Sprintf("%s message from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
 			{
@@ -334,16 +369,15 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		},
 	}
 
-	// switch embed color depending on msg type
 	switch msg.Type {
 	case "Error":
-		embedFull.Color = 0xFF0000
+		embedFull.Color = 0xFF0000 // Red
 	case "Warning":
-		embedFull.Color = 0xFFFF00
+		embedFull.Color = 0xFFFF00 // Yellow
 	case "Success":
-		embedFull.Color = 0x00FF00
+		embedFull.Color = 0x00FF00 // Green
 	default:
-		embedFull.Color = 0xFFFFFF
+		embedFull.Color = 0xFFFFFF // White
 	}
 	if msg.Type == "Log" {
 		_, err := s.ChannelMessageSend(channelID, " ["+timestampStr+"] "+msg.Message)
@@ -443,17 +477,15 @@ func hasRequiredRole(s *discordgo.Session, guildID, userID string, roles ...stri
 }
 
 func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	_, err := s.ChannelMessageSendComplex(os.Getenv("CHANNEL_ID"), &discordgo.MessageSend{
-		Content: "Bot is up and running! :)",
-	})
+	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Hello, @everyone! The bot is back online. Thank you for your patience! <:AdomateLogo:1104587690139205713>")
 	if err != nil {
-		fmt.Println("Error sending message:", err)
+		fmt.Println("Error:", err)
 	}
 }
 
 func sendClosingMessage(s *discordgo.Session) {
-	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Bot is going offline for scheduled maintenance. See you soon!")
+	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Hello, @everyone! The bot is going down for maintenance. Please be patient while we work on it. Thank you! <:AdomateLogo:1104587690139205713>")
 	if err != nil {
-		fmt.Println("Error sending closing message:", err)
+		fmt.Println("Error	:", err)
 	}
 }
