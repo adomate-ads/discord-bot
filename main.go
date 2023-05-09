@@ -36,7 +36,6 @@ func main() {
 	discord.AddHandler(messageCreate)
 	discord.AddHandler(interactionCreate)
 	discord.AddHandler(handleInteraction)
-	discord.AddHandler(onReady)
 	err = registerCommands(discord, os.Getenv("GUILD_ID"))
 	if err != nil {
 		fmt.Println("Error registering commands: ", err)
@@ -135,7 +134,6 @@ func main() {
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
-	sendClosingMessage(discord)
 	// Cleanly close down the Discord session.
 	discord.Close()
 }

@@ -147,13 +147,13 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			icebreaker = data.Options[1].StringValue()
 		}
 		if icebreaker == "" {
-			message := "Howdy @everyone! Welcome <@" + i.Member.User.ID + "> to Adomate!\nThey have joined the " + departmentMsg + " department!"
+			message := "Howdy! Welcome <@" + i.Member.User.ID + "> to Adomate!\nThey have joined the " + departmentMsg + " department!"
 			_, err := s.ChannelMessageSend(os.Getenv("INTRO_CHANNEL_ID"), message)
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
 		} else {
-			message := "Howdy @everyone! Welcome <@" + i.Member.User.ID + "> to Adomate!\nFun Fact about " + i.Member.User.Username + ": " + icebreaker + "\nThey have joined the " + departmentMsg + " department!"
+			message := "Howdy! Welcome <@" + i.Member.User.ID + "> to Adomate!\nFun Fact about " + i.Member.User.Username + ": " + icebreaker + "\nThey have joined the " + departmentMsg + " department!"
 			_, err := s.ChannelMessageSend(os.Getenv("INTRO_CHANNEL_ID"), message)
 			if err != nil {
 				fmt.Println("Error:", err)
@@ -482,18 +482,4 @@ func hasRequiredRole(s *discordgo.Session, guildID, userID string, roles ...stri
 		}
 	}
 	return false
-}
-
-func onReady(s *discordgo.Session, r *discordgo.Ready) {
-	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Hello, @everyone! The bot is back online. Thank you for your patience!\nTeam Adomate Bot <:AdomateLogo:1104587690139205713>") // TODO change to emoji ID
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-}
-
-func sendClosingMessage(s *discordgo.Session) {
-	_, err := s.ChannelMessageSend(os.Getenv("CHANNEL_ID"), "Hello, @everyone! The bot is going down for maintenance. Please be patient while we work on it. Thank you!\nTeam Adomate Bot <:AdomateLogo:1104587690139205713>") // TODO change to emoji ID
-	if err != nil {
-		fmt.Println("Error	:", err)
-	}
 }
