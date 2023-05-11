@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type RabbitMQConfig struct {
@@ -128,12 +129,71 @@ func main() {
 		fmt.Println("error opening connection,", err)
 		return
 	}
-
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
+	go checkStatusForever(os.Getenv("FRONTEND_URL"), discord, os.Getenv("FRONTEND_CHANNEL_ID"))
+	go checkStatusForever(os.Getenv("API_URL"), discord, os.Getenv("BACKEND_CHANNEL_ID"))
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	// Cleanly close down the Discord session.
 	discord.Close()
+}
+
+func checkStatusForever(url string, discord *discordgo.Session, channelID string) {
+	isDown := false
+
+	for {
+		status, err := getStatus(url)
+		if err != nil {
+			log.Printf("Error: %v", err)
+			isDown = true 
+		} else {
+			if status == "200 OK" {
+				if isDown {
+					embed := &discordgo.MessageEmbed{
+						Title:       "Adomate Error Status",
+						Description: "Error Resolved! Check the status of the service below:",
+						Color:       0x00ff00, // Green
+						Timestamp:   time.Now().Format(time.RFC3339),
+					}
+					_, err := discord.ChannelMessageSendEmbed(channelID, embed)
+					if err != nil {
+						fmt.Println("Error:", err)
+					}
+
+					isDown = false
+				}
+			} else {
+				if !isDown {
+					embed := &discordgo.MessageEmbed{
+						Title:       "Adomate Error Status",
+						Description: "Error Reported! Check the status of the service below:",
+						Color:       0xff0000, // Red
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:   "URL",
+								Value:  url,
+								Inline: true,
+							},
+							{
+								Name:   "Status",
+								Value:  status,
+								Inline: true,
+							},
+						},
+						Timestamp: time.Now().Format(time.RFC3339),
+					}
+					_, err := discord.ChannelMessageSendEmbed(channelID, embed)
+					if err != nil {
+						fmt.Println("Error:", err)
+					}
+
+					isDown = true
+				}
+			}
+		}
+
+		time.Sleep(time.Minute)
+	}
 }

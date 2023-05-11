@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"net/http"
@@ -9,39 +8,6 @@ import (
 	"strings"
 	"time"
 )
-
-type Department struct {
-	Name        string `json:"name"`
-	Message     string `json:"message"`
-	Description string `json:"description"`
-	Guidelines  string `json:"guidelines"`
-	Emote       string `json:"emote"`
-	RoleID      string `json:"role_id"`
-}
-
-type DepartmentsData struct {
-	Departments []Department `json:"departments"`
-	Default     Department   `json:"default"`
-}
-
-func parseDepartmentsJSON(filename string) (DepartmentsData, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return DepartmentsData{}, err
-	}
-	defer file.Close()
-
-	decoder := json.NewDecoder(file)
-
-	var departmentsData DepartmentsData
-
-	err = decoder.Decode(&departmentsData)
-	if err != nil {
-		return DepartmentsData{}, err
-	}
-
-	return departmentsData, nil
-}
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
@@ -64,12 +30,6 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 					Name:        "department",
 					Description: "What department are you in?",
 					Required:    true,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "icebreaker",
-					Description: "Share an interesting fact about yourself!",
-					Required:    false,
 				},
 			},
 		},
@@ -107,26 +67,8 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	switch data.Name {
 	case "welcome":
 		department := strings.ToLower(data.Options[0].StringValue())
-		departmentMsg := ""
-		departmentDesc := ""
-		roleEmote := ""
-		guidelines := ""
 		roleID := ""
-		departmentsData, err := parseDepartmentsJSON("departments.json")
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
-		for _, departmentData := range departmentsData.Departments {
-			if departmentData.Name == department {
-				departmentMsg = departmentData.Message
-				departmentDesc = departmentData.Description
-				guidelines = departmentData.Guidelines
-				roleEmote = departmentData.Emote
-				roleID = departmentData.RoleID
-				break
-			}
-		}
-		if departmentMsg == "" {
+		if department == "" {
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
@@ -138,50 +80,37 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				fmt.Println("Error:", err)
 			}
 		} else {
-		err = updateRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, roleID)
+			switch department {
+			case "hr":
+				roleID = os.Getenv("HR_ROLE_ID")
+			case "engineering":
+				roleID = os.Getenv("ENGINEERING_ROLE_ID")
+			case "marketing":
+				roleID = os.Getenv("MARKETING_ROLE_ID")
+			case "design":
+				roleID = os.Getenv("DESIGN_ROLE_ID")
+			case "sales":
+				roleID = os.Getenv("SALES_ROLE_ID")
+			case "support":
+				roleID = os.Getenv("SUPPORT_ROLE_ID")
+			}
+		err := updateRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, roleID)
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
-		icebreaker := ""
-		if len(data.Options) > 1 {
-			icebreaker = data.Options[1].StringValue()
-		}
-		if icebreaker == "" {
-			message := "Howdy! Welcome <@" + i.Member.User.ID + "> to Adomate!\nThey have joined the " + departmentMsg + " department!"
-			_, err := s.ChannelMessageSend(os.Getenv("INTRO_CHANNEL_ID"), message)
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-		} else {
-			message := "Howdy! Welcome <@" + i.Member.User.ID + "> to Adomate!\nFun Fact about " + i.Member.User.Username + ": " + icebreaker + "\nThey have joined the " + departmentMsg + " department!"
-			_, err := s.ChannelMessageSend(os.Getenv("INTRO_CHANNEL_ID"), message)
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-		}
-
-		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Flags:   1 << 6,
-				Content: "Howdy " + i.Member.User.Username + "!\nWelcome to the ***" + departmentMsg + "*** Department!" + roleEmote + "\n\nMessage from the " + departmentMsg + " Department: \n" + departmentDesc + "\n\n" + guidelines + "\n\nHave a great time at Adomate!",
+				Content: "Howdy " + i.Member.User.Username + ", Welcome to Adomate! You have been assigned the " + data.Options[0].StringValue() + " role!",
 			},
 		})
-		if err2 != nil {
+		if err != nil {
 			fmt.Println("Error:", err)
 		}
 	}
 	case "api":
-		if !hasRequiredRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, "Developer", "Support") {
-			if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "You do not have permission to use this command.",
-				},
-			}); err != nil {
-				fmt.Println("Error responding to interaction:", err)
-			}
-		} else {
+
 			status, err := getStatus(os.Getenv("API_URL"))
 			if err != nil {
 				fmt.Println("Error:", err)
@@ -202,19 +131,9 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if err2 != nil {
 				fmt.Println("Error:", err)
 			}
-		}
+
 	case "frontend":
-		if !hasRequiredRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, "Developer", "Support") {
-			if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "You do not have permission to use this command.",
-				},
-			}); err != nil {
-				fmt.Println("Error responding to interaction:", err)
-			}
-			return
-		} else {
+
 			status, err := getStatus(os.Getenv("FRONTEND_URL"))
 			if err != nil {
 				fmt.Println("Error:", err)
@@ -235,7 +154,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if err2 != nil {
 				fmt.Println("Error:", err)
 			}
-		}
+		
 	case "status":
 		frontendStatus, err := getStatus(os.Getenv("FRONTEND_URL"))
 		if err != nil {
@@ -458,28 +377,3 @@ func updateRole(session *discordgo.Session, guildID string, userID string, roleI
 	return nil
 }
 
-func hasRequiredRole(s *discordgo.Session, guildID, userID string, roles ...string) bool {
-	guildRoles, err := s.GuildRoles(guildID)
-	if err != nil {
-		fmt.Println("Error retrieving guild roles:", err)
-		return false
-	}
-
-	member, err := s.GuildMember(guildID, userID)
-	if err != nil {
-		fmt.Println("Error retrieving guild member information:", err)
-		return false
-	}
-	for _, roleID := range member.Roles {
-		for _, role := range guildRoles {
-			if role.ID == roleID {
-				for _, requiredRole := range roles {
-					if role.Name == requiredRole {
-						return true
-					}
-				}
-			}
-		}
-	}
-	return false
-}
