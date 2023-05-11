@@ -63,14 +63,17 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		/*
 			call the updateRole function here
 		*/
-		getTeam(os.Getenv("GITHUB_ORG"))
-		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		err := getTeam(os.Getenv("GITHUB_ORG"))
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Welcome to Adomate! Let's get you started!",
 			},
 		})
-		if err != nil {
+		if err2 != nil {
 			fmt.Println("Error:", err)
 		}
 	case "api":
