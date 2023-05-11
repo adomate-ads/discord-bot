@@ -194,6 +194,6 @@ func checkStatusForever(url string, discord *discordgo.Session, channelID string
 			}
 		}
 
-		time.Sleep(time.Minute)
+		time.Sleep(time.Second * 30)
 	}
 }

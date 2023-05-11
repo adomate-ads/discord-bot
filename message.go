@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	github "github.com/google/go-github/v52/github"
 	"github.com/bwmarrin/discordgo"
 	"net/http"
 	"os"
-	"strings"
+	"golang.org/x/oauth2"
 	"time"
 )
 
@@ -24,14 +26,6 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 		{
 			Name:        "welcome",
 			Description: "Howdy! Welcome to Adomate! Let's get you started!",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "department",
-					Description: "What department are you in?",
-					Required:    true,
-				},
-			},
 		},
 		{
 			Name:        "api",
@@ -66,49 +60,19 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	switch data.Name {
 	case "welcome":
-		department := strings.ToLower(data.Options[0].StringValue())
-		roleID := ""
-		if department == "" {
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Flags:   1 << 6,
-					Content: "Howdy " + i.Member.User.Username + ", Please enter a valid department! or contact " + "<@&1104594618701590548>" + " for more information!", // TODO replace with new HR role id
-				},
-			})
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-		} else {
-			switch department {
-			case "hr":
-				roleID = os.Getenv("HR_ROLE_ID")
-			case "engineering":
-				roleID = os.Getenv("ENGINEERING_ROLE_ID")
-			case "marketing":
-				roleID = os.Getenv("MARKETING_ROLE_ID")
-			case "design":
-				roleID = os.Getenv("DESIGN_ROLE_ID")
-			case "sales":
-				roleID = os.Getenv("SALES_ROLE_ID")
-			case "support":
-				roleID = os.Getenv("SUPPORT_ROLE_ID")
-			}
-		err := updateRole(s, os.Getenv("GUILD_ID"), i.Member.User.ID, roleID)
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
-		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		/*
+			call the updateRole function here
+		*/
+		getTeam(os.Getenv("GITHUB_ORG"))
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags:   1 << 6,
-				Content: "Howdy " + i.Member.User.Username + ", Welcome to Adomate! You have been assigned the " + data.Options[0].StringValue() + " role!",
+				Content: "Welcome to Adomate! Let's get you started!",
 			},
 		})
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
-	}
 	case "api":
 
 			status, err := getStatus(os.Getenv("API_URL"))
@@ -166,7 +130,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 		embed := &discordgo.MessageEmbed{
 			Title:       "Adomate Status Dashboard - " + time.Now().Format("01-02-2006 15:04:05") + " CST",
-			Description: "Adomate status information <:AdomateLogo:1104587690139205713>", // TODO change emoji ID
+			Description: "Adomate status information" + os.Getenv("ADOMATE_EMOJI_ID"),
 			Color:       0x637EFE,
 			Fields: []*discordgo.MessageEmbedField{
 				{
@@ -368,12 +332,40 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 }
+// TODO: update role from github
 
-func updateRole(session *discordgo.Session, guildID string, userID string, roleID string) error {
-	err := session.GuildMemberRoleAdd(guildID, userID, roleID)
+func getTeam(orgName string) error {
+	// Create an OAuth2 token source
+	tokenSource := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_PAT")},
+	)
+
+	// Create an OAuth2 HTTP client
+	oauthClient := oauth2.NewClient(context.Background(), tokenSource)
+
+	// Create a GitHub client using the OAuth2 client
+	client := github.NewClient(oauthClient)
+
+	// Get the organization teams
+	teams, _, err := client.Teams.ListTeams(context.Background(), orgName, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("error retrieving teams: %v", err)
+	}
+
+	// Iterate over the teams and get their members
+	for _, team := range teams {
+		// Get the team members
+		members, _, err := client.Teams.ListTeamMembersBySlug(context.Background(), orgName, *team.Slug, nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving members for team %s: %v", *team.Name, err)
+		}
+
+		// Print the team name and its members
+		fmt.Printf("Team: %s\n", *team.Name)
+		for _, member := range members {
+			fmt.Printf("Member: %s\n", *member.Login)
+		}
+		fmt.Println()
 	}
 	return nil
 }
-
