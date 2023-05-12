@@ -371,7 +371,7 @@ func getTeam(orgName string) ([]Team, error) {
 }
 
 func updateRole(s *discordgo.Session, i *discordgo.InteractionCreate, githubName string) error {
-	teamData, err := getTeam(os.Getenv("GITHUB_ORG"))
+	teamData, err := getTeam("adomate-ads")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return err
