@@ -393,6 +393,7 @@ func updateRole(s *discordgo.Session, i *discordgo.InteractionCreate, githubName
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
+				Flags:  1 << 6,
 				Content: "Invalid GitHub username. Please try again with a valid GitHub username.",
 			},
 		})
@@ -424,6 +425,7 @@ func updateRole(s *discordgo.Session, i *discordgo.InteractionCreate, githubName
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
+				Flags:  1 << 6,
 				Content: "Your roles have been updated successfully! Thank you for verifying your GitHub account.",
 			},
 		})
