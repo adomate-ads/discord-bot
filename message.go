@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	github "github.com/google/go-github/v52/github"
+	"golang.org/x/oauth2"
 	"net/http"
 	"os"
 	"time"
@@ -22,7 +25,15 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 	commands := []*discordgo.ApplicationCommand{
 		{
 			Name:        "welcome",
-			Description: "HOWDY!",
+			Description: "Howdy! Welcome to Adomate! Let's get you started!",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "github_username",
+					Description: "Enter your GitHub username",
+					Required:    true,
+				},
+			},
 		},
 		{
 			Name:        "api",
@@ -34,9 +45,14 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 		},
 		{
 			Name:        "status",
-			Description: "Check Bot status",
+			Description: "Check status of all services",
+		},
+		{
+			Name:        "help",
+			Description: "Get help with the bot",
 		},
 	}
+
 	_, err := s.ApplicationCommandBulkOverwrite(os.Getenv("APP_ID"), guildID, commands)
 	if err != nil {
 		return err
@@ -52,25 +68,21 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	switch data.Name {
 	case "welcome":
-		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Howdy!",
-			},
-		})
+		err := updateRole(s, i, data.Options[0].StringValue())
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
 	case "api":
+
 		status, err := getStatus("https://api.adomate.ai/v1/")
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
 		var content string
 		if status == "200 OK" {
-			content = "API is operational.\nCode: " + status
+			content = "API is operational." + "```" + "\nCode: " + status + "```" + "\n" + "https://api.adomate.ai/v1/"
 		} else {
-			content = "API is having issues.\nError Code: " + status
+			content = "API is having issues." + "```" + "\nCode: " + status + "```" + "\n" + "https://api.adomate.ai/v1/"
 		}
 
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -82,16 +94,18 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if err2 != nil {
 			fmt.Println("Error:", err)
 		}
+
 	case "frontend":
+
 		status, err := getStatus("https://www.adomate.ai/")
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
 		var content string
 		if status == "200 OK" {
-			content = "Frontend is operational.\nCode: " + status
+			content = "Frontend is operational." + "```" + "\nCode: " + status + "```" + "\n" + "https://www.adomate.ai/"
 		} else {
-			content = "Frointend is having issues.\nError Code: " + status
+			content = "Frontend is having issues." + "```" + "\nCode: " + status + "```" + "\n" + "https://www.adomate.ai/"
 		}
 
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -103,11 +117,72 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if err2 != nil {
 			fmt.Println("Error:", err)
 		}
+
 	case "status":
+		frontendStatus, err := getStatus("https://www.adomate.ai/")
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+		apiStatus, err := getStatus("https://api.adomate.ai/v1/")
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+		embed := &discordgo.MessageEmbed{
+			Title:       "Adomate Status Dashboard - " + time.Now().Format("01-02-2006 15:04:05") + " CST",
+			Description: "Adomate status information <:logo:1106617488533372998>",
+			Color:       0x637EFE,
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:   "Service",
+					Value:  "Frontend\nAPI\nBot",
+					Inline: true,
+				},
+				{
+					Name:   "Status",
+					Value:  frontendStatus + "\n" + apiStatus + "\n200 OK",
+					Inline: true,
+				},
+				{
+					Name:   "URL",
+					Value:  "https://www.adomate.ai/" + "\n" + "https://api.adomate.ai/v1/" + "\n" + os.Getenv("BOT_URL"),
+					Inline: true,
+				},
+			},
+		}
+		embed.URL = "https://status.adomate.ai/"
+
+		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: []*discordgo.MessageEmbed{embed},
+			},
+		})
+		if err2 != nil {
+			fmt.Println("Error:", err)
+		}
+	case "help":
+		embed := &discordgo.MessageEmbed{
+			Title:       "Adomate Bot Help",
+			Description: "Adomate Bot is a bot that helps with Adomate's Discord Server.",
+			Color:       0x637EFE,
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:   "Commands",
+					Value:  "1. /welcome\n2. /api\n3. /frontend\n4. /status\n5. /help",
+					Inline: true,
+				},
+				{
+					Name:   "Description",
+					Value:  "Sends a welcome message and assigns roles.\nChecks the status of the API.\nChecks the status of the Frontend.\nStatus dashboard for all services.\nShows this help message.",
+					Inline: true,
+				},
+			},
+		}
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Adomate Bot is operational.",
+				Flags:  1 << 6,
+				Embeds: []*discordgo.MessageEmbed{embed},
 			},
 		})
 		if err != nil {
@@ -127,11 +202,11 @@ type Message struct {
 /*
 	message example
 	{
-	"type":"Error",
-	"message":"test",
-	"suggestion":"lol",
-	"origin":"api",
-	"time":"2018-12-12T11:45:26.371Z"
+	"type":"Error/Warning/Success/Log",
+	"message":"Add Message",
+	"suggestion":"Add Suggestion",
+	"origin":"API",
+	"time":"2023-04-24T08:45:26.371Z"
 	}
 */
 
@@ -140,7 +215,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
 	embedFull := &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
-		Color:       0x800000, // Maroon - should change later based on message
+		Color:       0x800000, // Maroon
 		Description: fmt.Sprintf("%s message from %s", msg.Type, msg.Origin),
 		Fields: []*discordgo.MessageEmbedField{
 			{
@@ -179,16 +254,15 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		},
 	}
 
-	// switch embed color depending on msg type
 	switch msg.Type {
 	case "Error":
-		embedFull.Color = 0xFF0000
+		embedFull.Color = 0xFF0000 // Red
 	case "Warning":
-		embedFull.Color = 0xFFFF00
+		embedFull.Color = 0xFFFF00 // Yellow
 	case "Success":
-		embedFull.Color = 0x00FF00
+		embedFull.Color = 0x00FF00 // Green
 	default:
-		embedFull.Color = 0xFFFFFF
+		embedFull.Color = 0xFFFFFF // White
 	}
 	if msg.Type == "Log" {
 		_, err := s.ChannelMessageSend(channelID, " ["+timestampStr+"] "+msg.Message)
@@ -205,7 +279,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		}
 
 		messageSendData := &discordgo.MessageSend{
-			Embed:   embedFull,
+			Embed: embedFull,
 			Components: []discordgo.MessageComponent{
 				&actionRow,
 			},
@@ -213,7 +287,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 
 		_, err := s.ChannelMessageSendComplex(channelID, messageSendData)
 		if err != nil {
-			fmt.Println("Error sending message:", err)
+			fmt.Println("Error:", err)
 		}
 	}
 	return nil
@@ -251,4 +325,115 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			fmt.Println("Error sending interaction response:", err)
 		}
 	}
+}
+
+type Team struct {
+	Name    string   `json:"name"`
+	Members []string `json:"members"`
+}
+
+func getTeam(orgName string) ([]Team, error) {
+	tokenSource := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_PAT")},
+	)
+
+	oauthClient := oauth2.NewClient(context.Background(), tokenSource)
+
+	client := github.NewClient(oauthClient)
+
+	teams, _, err := client.Teams.ListTeams(context.Background(), orgName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error: %v", err)
+	}
+
+	var teamData []Team
+
+	for _, team := range teams {
+		teamMembers, _, err := client.Teams.ListTeamMembersBySlug(context.Background(), orgName, *team.Slug, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving members for team %s: %v", *team.Name, err)
+		}
+
+		var members []string
+		for _, member := range teamMembers {
+			members = append(members, *member.Login)
+		}
+
+		teamInfo := Team{
+			Name:    *team.Name,
+			Members: members,
+		}
+
+		teamData = append(teamData, teamInfo)
+	}
+
+	return teamData, nil
+}
+
+func updateRole(s *discordgo.Session, i *discordgo.InteractionCreate, githubName string) error {
+	teamData, err := getTeam("adomate-ads")
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return err
+	}
+	var teamNames []string
+	found := false
+
+	for _, team := range teamData {
+		for _, member := range team.Members {
+			if member == githubName {
+				teamNames = append(teamNames, team.Name)
+				found = true
+				break
+			}
+		}
+	}
+
+	if !found {
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags:  1 << 6,
+				Content: "Invalid GitHub username. Please try again with a valid GitHub username.",
+			},
+		})
+		if err != nil {
+			fmt.Println("Error:", err)
+		}
+		return nil
+	} else {
+		var roleIDs []string
+		for _, teamName := range teamNames {
+			switch teamName {
+			case "frontend":
+				roleIDs = append(roleIDs, os.Getenv("FRONTEND_ROLE_ID"))
+			case "backend":
+				roleIDs = append(roleIDs, os.Getenv("BACKEND_ROLE_ID"))
+			case "discord":
+				roleIDs = append(roleIDs, os.Getenv("DISCORD_ROLE_ID"))
+			default:
+				roleIDs = append(roleIDs, os.Getenv("MEMBER_ROLE_ID"))
+			}
+		}
+
+		for _, roleID := range roleIDs {
+			err := s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, roleID)
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+				return err
+			}
+		}
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags:  1 << 6,
+				Content: "Your roles have been updated successfully! Thank you for verifying your GitHub account.",
+			},
+		})
+		if err != nil {
+			fmt.Println("Error:", err)
+			return err
+		}
+	}
+return nil
 }

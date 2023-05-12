@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type RabbitMQConfig struct {
@@ -35,7 +36,7 @@ func main() {
 	// Register the messageCreate func as a callback for MessageCreate events.
 	discord.AddHandler(messageCreate)
 	discord.AddHandler(interactionCreate)
-	discord.AddHandler(handleInteraction)	
+	discord.AddHandler(handleInteraction)
 	err = registerCommands(discord, os.Getenv("GUILD_ID"))
 	if err != nil {
 		fmt.Println("Error registering commands: ", err)
@@ -128,13 +129,71 @@ func main() {
 		fmt.Println("error opening connection,", err)
 		return
 	}
-
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
+	go checkStatusForever("https://www.adomate.ai/", discord, os.Getenv("CHANNEL_ID"), os.Getenv("FRONTEND_ROLE_ID"))
+	go checkStatusForever("https://api.adomate.ai/v1/", discord, os.Getenv("CHANNEL_ID"), os.Getenv("BACKEND_ROLE_ID"))
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
-
 	// Cleanly close down the Discord session.
 	discord.Close()
+}
+
+func checkStatusForever(url string, discord *discordgo.Session, channelID string, roleID string) {
+	isDown := false
+
+	for {
+		status, err := getStatus(url)
+		if err != nil {
+			log.Printf("Error: %v", err)
+			isDown = true 
+		} else {
+			if status == "200 OK" {
+				if isDown {
+					embed := &discordgo.MessageEmbed{
+						Title:       "Adomate Error Status",
+						Description: "<@&"+ roleID + ">\nError Resolved! Check the status of the service below:",
+						Color:       0x00ff00, // Green
+						Timestamp:   time.Now().Format(time.RFC3339),
+					}
+					_, err := discord.ChannelMessageSendEmbed(channelID, embed)
+					if err != nil {
+						fmt.Println("Error:", err)
+					}
+
+					isDown = false
+				}
+			} else {
+				if !isDown {
+					embed := &discordgo.MessageEmbed{
+						Title:       "Adomate Error Status",
+						Description: "<@&"+ roleID + ">\nError Reported! Check the status of the service below:",
+						Color:       0xff0000, // Red
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:   "URL",
+								Value:  url,
+								Inline: true,
+							},
+							{
+								Name:   "Status",
+								Value:  status,
+								Inline: true,
+							},
+						},
+						Timestamp: time.Now().Format(time.RFC3339),
+					}
+					_, err := discord.ChannelMessageSendEmbed(channelID, embed)
+					if err != nil {
+						fmt.Println("Error:", err)
+					}
+
+					isDown = true
+				}
+			}
+		}
+
+		time.Sleep(time.Second * 30)
+	}
 }
