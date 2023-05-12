@@ -132,8 +132,8 @@ func main() {
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
-	go checkStatusForever(os.Getenv("FRONTEND_URL"), discord, os.Getenv("CHANNEL_ID"), os.Getenv("FRONTEND_ROLE_ID"))
-	go checkStatusForever(os.Getenv("API_URL"), discord, os.Getenv("CHANNEL_ID"), os.Getenv("BACKEND_ROLE_ID"))
+	go checkStatusForever("https://www.adomate.ai/", discord, os.Getenv("CHANNEL_ID"), os.Getenv("FRONTEND_ROLE_ID"))
+	go checkStatusForever("https://api.adomate.ai/v1/", discord, os.Getenv("CHANNEL_ID"), os.Getenv("BACKEND_ROLE_ID"))
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	// Cleanly close down the Discord session.
@@ -149,7 +149,7 @@ func checkStatusForever(url string, discord *discordgo.Session, channelID string
 			log.Printf("Error: %v", err)
 			isDown = true 
 		} else {
-			if status != "200 OK" {
+			if status == "200 OK" {
 				if isDown {
 					embed := &discordgo.MessageEmbed{
 						Title:       "Adomate Error Status",

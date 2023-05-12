@@ -74,15 +74,15 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	case "api":
 
-		status, err := getStatus(os.Getenv("API_URL"))
+		status, err := getStatus("https://api.adomate.ai/v1/")
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
 		var content string
 		if status == "200 OK" {
-			content = "API is operational." + "```" + "\nCode: " + status + "```" + "\n" + os.Getenv("API_URL")
+			content = "API is operational." + "```" + "\nCode: " + status + "```" + "\n" + "https://api.adomate.ai/v1/"
 		} else {
-			content = "API is having issues." + "```" + "\nCode: " + status + "```" + "\n" + os.Getenv("API_URL")
+			content = "API is having issues." + "```" + "\nCode: " + status + "```" + "\n" + "https://api.adomate.ai/v1/"
 		}
 
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -97,15 +97,15 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	case "frontend":
 
-		status, err := getStatus(os.Getenv("FRONTEND_URL"))
+		status, err := getStatus("https://www.adomate.ai/")
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
 		var content string
 		if status == "200 OK" {
-			content = "Frontend is operational." + "```" + "\nCode: " + status + "```" + "\n" + os.Getenv("FRONTEND_URL")
+			content = "Frontend is operational." + "```" + "\nCode: " + status + "```" + "\n" + "https://www.adomate.ai/"
 		} else {
-			content = "Frontend is having issues." + "```" + "\nCode: " + status + "```" + "\n" + os.Getenv("FRONTEND_URL")
+			content = "Frontend is having issues." + "```" + "\nCode: " + status + "```" + "\n" + "https://www.adomate.ai/"
 		}
 
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -119,17 +119,17 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 
 	case "status":
-		frontendStatus, err := getStatus(os.Getenv("FRONTEND_URL"))
+		frontendStatus, err := getStatus("https://www.adomate.ai/")
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
-		apiStatus, err := getStatus(os.Getenv("API_URL"))
+		apiStatus, err := getStatus("https://api.adomate.ai/v1/")
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
 		embed := &discordgo.MessageEmbed{
 			Title:       "Adomate Status Dashboard - " + time.Now().Format("01-02-2006 15:04:05") + " CST",
-			Description: "Adomate status information" + os.Getenv("ADOMATE_EMOJI_ID"),
+			Description: "Adomate status information <:logo:1106617488533372998>",
 			Color:       0x637EFE,
 			Fields: []*discordgo.MessageEmbedField{
 				{
@@ -144,12 +144,12 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				},
 				{
 					Name:   "URL",
-					Value:  os.Getenv("FRONTEND_URL") + "\n" + os.Getenv("API_URL") + "\n" + os.Getenv("BOT_URL"),
+					Value:  "https://www.adomate.ai/" + "\n" + "https://api.adomate.ai/v1/" + "\n" + os.Getenv("BOT_URL"),
 					Inline: true,
 				},
 			},
 		}
-		embed.URL = os.Getenv("STATUS_URL")
+		embed.URL = "https://status.adomate.ai/"
 
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
