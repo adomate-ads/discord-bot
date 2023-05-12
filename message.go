@@ -412,6 +412,7 @@ func updateRole(s *discordgo.Session, i *discordgo.InteractionCreate, githubName
 			case "discord":
 				roleIDs = append(roleIDs, os.Getenv("DISCORD_ROLE_ID"))
 			default:
+				roleIDs = append(roleIDs, os.Getenv("MEMBER_ROLE_ID"))
 			}
 		}
 

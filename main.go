@@ -132,15 +132,15 @@ func main() {
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
-	go checkStatusForever(os.Getenv("FRONTEND_URL"), discord, os.Getenv("FRONTEND_CHANNEL_ID"))
-	go checkStatusForever(os.Getenv("API_URL"), discord, os.Getenv("BACKEND_CHANNEL_ID"))
+	go checkStatusForever(os.Getenv("FRONTEND_URL"), discord, os.Getenv("CHANNEL_ID"), os.Getenv("FRONTEND_ROLE_ID"))
+	go checkStatusForever(os.Getenv("API_URL"), discord, os.Getenv("CHANNEL_ID"), os.Getenv("BACKEND_ROLE_ID"))
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	// Cleanly close down the Discord session.
 	discord.Close()
 }
 
-func checkStatusForever(url string, discord *discordgo.Session, channelID string) {
+func checkStatusForever(url string, discord *discordgo.Session, channelID string, roleID string) {
 	isDown := false
 
 	for {
@@ -149,11 +149,11 @@ func checkStatusForever(url string, discord *discordgo.Session, channelID string
 			log.Printf("Error: %v", err)
 			isDown = true 
 		} else {
-			if status == "200 OK" {
+			if status != "200 OK" {
 				if isDown {
 					embed := &discordgo.MessageEmbed{
 						Title:       "Adomate Error Status",
-						Description: "Error Resolved! Check the status of the service below:",
+						Description: "<@&"+ roleID + ">\nError Resolved! Check the status of the service below:",
 						Color:       0x00ff00, // Green
 						Timestamp:   time.Now().Format(time.RFC3339),
 					}
@@ -168,7 +168,7 @@ func checkStatusForever(url string, discord *discordgo.Session, channelID string
 				if !isDown {
 					embed := &discordgo.MessageEmbed{
 						Title:       "Adomate Error Status",
-						Description: "Error Reported! Check the status of the service below:",
+						Description: "<@&"+ roleID + ">\nError Reported! Check the status of the service below:",
 						Color:       0xff0000, // Red
 						Fields: []*discordgo.MessageEmbedField{
 							{
