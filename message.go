@@ -68,7 +68,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := i.ApplicationCommandData()
 	switch data.Name {
 	case "welcome":
-		err :=updateRole(s, i, data.Options[0].StringValue())
+		err := updateRole(s, i, data.Options[0].StringValue())
 		if err != nil {
 			fmt.Println("Error:", err)
 		}
