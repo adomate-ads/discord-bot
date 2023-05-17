@@ -128,7 +128,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			fmt.Println("Error:", err)
 		}
 		embed := &discordgo.MessageEmbed{
-			Title:       "Adomate Status Dashboard - " + time.Now().Format("01-02-2006 15:04:05") + " CST",
+			Title:       "Adomate Status Dashboard - " + time.Now().Local().Format("01/02/2006 03:04:05 PM (MST)"),
 			Description: "Adomate status information <:logo:1106617488533372998>",
 			Color:       0x637EFE,
 			Fields: []*discordgo.MessageEmbedField{
