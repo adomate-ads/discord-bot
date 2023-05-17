@@ -112,9 +112,16 @@ func main() {
 			if err != nil {
 				log.Printf("Failed to parse messages: %v", err)
 			}
-			err = sendDiscordMessage(discord, os.Getenv("CHANNEL_ID"), msg)
-			if err != nil {
-				log.Printf("Failed to send message to Discord: %v", err)
+			if msg.Type == "Error" || msg.Type == "Warning" {
+				err = sendDiscordMessage(discord, os.Getenv("ERROR_CHANNEL_ID"), msg)
+				if err != nil {
+					log.Printf("Failed to send message to Discord: %v", err)
+				}
+			} else {
+				err = sendDiscordMessage(discord, os.Getenv("LOG_CHANNEL_ID"), msg)
+				if err != nil {
+					log.Printf("Failed to send message to Discord: %v", err)
+				}
 			}
 			err = d.Ack(false)
 			if err != nil {
@@ -132,32 +139,32 @@ func main() {
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
-	go checkStatusForever("https://www.adomate.ai/", discord, os.Getenv("CHANNEL_ID"), os.Getenv("FRONTEND_ROLE_ID"))
-	go checkStatusForever("https://api.adomate.ai/v1/", discord, os.Getenv("CHANNEL_ID"), os.Getenv("BACKEND_ROLE_ID"))
+	go checkStatusForever("https://www.adomate.ai/", discord, os.Getenv("FRONTEND_ROLE_ID"))
+	go checkStatusForever("https://api.adomate.ai/v1/", discord, os.Getenv("BACKEND_ROLE_ID"))
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	// Cleanly close down the Discord session.
 	discord.Close()
 }
 
-func checkStatusForever(url string, discord *discordgo.Session, channelID string, roleID string) {
+func checkStatusForever(url string, discord *discordgo.Session, roleID string) {
 	isDown := false
 
 	for {
 		status, err := getStatus(url)
 		if err != nil {
 			log.Printf("Error: %v", err)
-			isDown = true 
+			isDown = true
 		} else {
 			if status == "200 OK" {
 				if isDown {
 					embed := &discordgo.MessageEmbed{
 						Title:       "Adomate Error Status",
-						Description: "<@&"+ roleID + ">\nError Resolved! Check the status of the service below:",
+						Description: "<@&" + roleID + ">\nError Resolved! Check the status of the service below:",
 						Color:       0x00ff00, // Green
 						Timestamp:   time.Now().Format(time.RFC3339),
 					}
-					_, err := discord.ChannelMessageSendEmbed(channelID, embed)
+					_, err := discord.ChannelMessageSendEmbed(os.Getenv("LOG_CHANNEL_ID"), embed)
 					if err != nil {
 						fmt.Println("Error:", err)
 					}
@@ -168,7 +175,7 @@ func checkStatusForever(url string, discord *discordgo.Session, channelID string
 				if !isDown {
 					embed := &discordgo.MessageEmbed{
 						Title:       "Adomate Error Status",
-						Description: "<@&"+ roleID + ">\nError Reported! Check the status of the service below:",
+						Description: "<@&" + roleID + ">\nError Reported! Check the status of the service below:",
 						Color:       0xff0000, // Red
 						Fields: []*discordgo.MessageEmbedField{
 							{
@@ -184,7 +191,7 @@ func checkStatusForever(url string, discord *discordgo.Session, channelID string
 						},
 						Timestamp: time.Now().Format(time.RFC3339),
 					}
-					_, err := discord.ChannelMessageSendEmbed(channelID, embed)
+					_, err := discord.ChannelMessageSendEmbed(os.Getenv("ERROR_CHANNEL_ID"), embed)
 					if err != nil {
 						fmt.Println("Error:", err)
 					}

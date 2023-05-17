@@ -192,19 +192,19 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 type Message struct {
-	Type       string    `json:"type" example:"error/warning/log"`
-	Message    string    `json:"message"`
-	Suggestion string    `json:"suggestion,omitempty"`
-	Time       time.Time `json:"time,omitempty" example:"2018-12-12T11:45:26.371Z"`
-	Origin     string    `json:"origin" example:"api/gac"`
+	Type    string    `json:"type" example:"error/warning/log"`
+	Title   string    `json:"title"`
+	Message string    `json:"message,omitempty"`
+	Time    time.Time `json:"time,omitempty" example:"2018-12-12T11:45:26.371Z"`
+	Origin  string    `json:"origin" example:"api/gac"`
 }
 
 /*
 	message example
 	{
 	"type":"Error/Warning/Success/Log",
-	"message":"Add Message",
-	"suggestion":"Add Suggestion",
+	"title":"Add title",
+	"message":"Add message",
 	"origin":"API",
 	"time":"2023-04-24T08:45:26.371Z"
 	}
@@ -214,46 +214,16 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	unixTime := msg.Time.Unix()
 	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
 	embedFull := &discordgo.MessageEmbed{
-		Author:      &discordgo.MessageEmbedAuthor{Name: "Adomate Discord Bot"},
 		Color:       0x800000, // Maroon
-		Description: fmt.Sprintf("%s message from %s", msg.Type, msg.Origin),
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name:   "Type: ",
-				Value:  msg.Type,
-				Inline: true,
-			},
-			{
-				Name:   "Origin: ",
-				Value:  msg.Origin,
-				Inline: true,
-			},
-			{
-				Name: "Message: ",
-				Value: func() string {
-					if msg.Message == "" {
-						return "-"
-					}
-					return "```" + msg.Message + "```"
-				}(),
-				Inline: false,
-			},
-			{
-				Name: "Suggestion: ",
-				Value: func() string {
-					if msg.Suggestion == "" {
-						return "-"
-					}
-					return "```" + msg.Suggestion + "```"
-				}(),
-				Inline: false,
-			},
-		},
+		Title:       "Adomate " + msg.Type + " Message from " + msg.Origin,
+		Description: fmt.Sprintf("> " + msg.Title + "\n> " + msg.Message),
 		Footer: &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("Time: %s", timestampStr),
+			Text: "⏰ " + timestampStr,
 		},
 	}
-
+	if msg.Message == "" {
+		embedFull.Description = fmt.Sprintf("> " + msg.Title)
+	}
 	switch msg.Type {
 	case "Error":
 		embedFull.Color = 0xFF0000 // Red
@@ -261,35 +231,16 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		embedFull.Color = 0xFFFF00 // Yellow
 	case "Success":
 		embedFull.Color = 0x00FF00 // Green
+	case "Log":
+		embedFull.Color = 0x637EFE // Adomate Purple
 	default:
 		embedFull.Color = 0xFFFFFF // White
 	}
-	if msg.Type == "Log" {
-		_, err := s.ChannelMessageSend(channelID, " ["+timestampStr+"] "+msg.Message)
-		return err
-	} else {
-		button := discordgo.Button{
-			Label:    "Delete",
-			Style:    discordgo.DangerButton,
-			CustomID: "delete_message",
-		}
-
-		actionRow := discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{&button},
-		}
-
-		messageSendData := &discordgo.MessageSend{
-			Embed: embedFull,
-			Components: []discordgo.MessageComponent{
-				&actionRow,
-			},
-		}
-
-		_, err := s.ChannelMessageSendComplex(channelID, messageSendData)
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
+	_, err := s.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{Embed: embedFull})
+	if err != nil {
+		fmt.Println("Error:", err)
 	}
+
 	return nil
 }
 
@@ -393,7 +344,7 @@ func updateRole(s *discordgo.Session, i *discordgo.InteractionCreate, githubName
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags:  1 << 6,
+				Flags:   1 << 6,
 				Content: "Invalid GitHub username. Please try again with a valid GitHub username.",
 			},
 		})
@@ -426,7 +377,7 @@ func updateRole(s *discordgo.Session, i *discordgo.InteractionCreate, githubName
 		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags:  1 << 6,
+				Flags:   1 << 6,
 				Content: "Your roles have been updated successfully! Thank you for verifying your GitHub account.",
 			},
 		})
@@ -435,5 +386,5 @@ func updateRole(s *discordgo.Session, i *discordgo.InteractionCreate, githubName
 			return err
 		}
 	}
-return nil
+	return nil
 }
