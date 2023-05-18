@@ -77,17 +77,17 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "Service",
-					Value:  "Frontend\nAPI\nBot",
+					Value:  "Frontend\nAPI",
 					Inline: true,
 				},
 				{
 					Name:   "Status",
-					Value:  frontendStatus + "\n" + apiStatus + "\n200 OK",
+					Value:  frontendStatus + "\n" + apiStatus,
 					Inline: true,
 				},
 				{
 					Name:   "URL",
-					Value:  "https://www.adomate.ai/" + "\n" + "https://api.adomate.ai/v1/" + "\n" + os.Getenv("BOT_URL"),
+					Value:  "https://www.adomate.ai/" + "\n" + "https://api.adomate.ai/v1/",
 					Inline: true,
 				},
 			},
@@ -97,6 +97,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
+				Flags: 1 << 6,
 				Embeds: []*discordgo.MessageEmbed{embed},
 			},
 		})
@@ -149,7 +150,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	case "Log":
 		embedFull.Color = 0x637EFE // Adomate Purple
 	default:
-		embedFull.Color = 0xFFFFFF // White
+		embedFull.Color = 0x800000 // Maroon
 	}
 	_, err := s.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{Embed: embedFull})
 	if err != nil {
