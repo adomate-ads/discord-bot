@@ -38,6 +38,13 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 - RABBIT_USER - RabbitMQ Username
 - RABBIT_PASS - RabbitMQ Password
 - RABBIT_DISCORD_QUEUE - RabbitMQ queue name
+- BETTERSTACK_TOKEN - BetterStack API key to get status
+- FRONTEND_ROLE_ID - Role ID for frontend team
+- BACKEND_ROLE_ID - Role ID for backend team
+- DISCORD_ROLE_ID - Role ID for discord team
+- ERROR_CHANNEL_ID - Channel ID for error messages
+- LOG_CHANNEL_ID - Channel ID for log messages
+- GITHUB_PAT - Github Personal Access Token
 
 ## Commands
 To Activate commands for the Adomate Bot, Send an `Activate` message on the channel.
