@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type RabbitMQConfig struct {
@@ -103,7 +104,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go func() {
+	checkQueue := func() {
 		for d := range msgs {
 			var msg Message
 			err := json.Unmarshal(d.Body, &msg)
@@ -128,6 +129,14 @@ func main() {
 			if err != nil {
 				log.Printf("Failed to acknowledge message: %v", err)
 			}
+		}
+	}
+
+	go func() {
+		checkQueue()
+		ticker := time.NewTicker(time.Hour)
+		for range ticker.C {
+			checkQueue()
 		}
 	}()
 
