@@ -35,7 +35,6 @@ func main() {
 
 	// Register the messageCreate func as a callback for MessageCreate events.
 	discord.AddHandler(messageCreate)
-	discord.AddHandler(interactionCreate)
 	discord.AddHandler(handleInteraction)
 	err = registerCommands(discord, os.Getenv("GUILD_ID"))
 	if err != nil {

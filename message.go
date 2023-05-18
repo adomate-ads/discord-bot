@@ -36,20 +36,8 @@ func registerCommands(s *discordgo.Session, guildID string) error {
 			},
 		},
 		{
-			Name:        "api",
-			Description: "Check API status",
-		},
-		{
-			Name:        "frontend",
-			Description: "Check Frontend status",
-		},
-		{
 			Name:        "status",
 			Description: "Check status of all services",
-		},
-		{
-			Name:        "help",
-			Description: "Get help with the bot",
 		},
 	}
 
@@ -70,51 +58,6 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	case "welcome":
 		err := updateRole(s, i, data.Options[0].StringValue())
 		if err != nil {
-			fmt.Println("Error:", err)
-		}
-	case "api":
-
-		status, err := getStatus("https://api.adomate.ai/v1/")
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
-		var content string
-		if status == "200 OK" {
-			content = "API is operational." + "```" + "\nCode: " + status + "```" + "\n" + "https://api.adomate.ai/v1/"
-		} else {
-			content = "API is having issues." + "```" + "\nCode: " + status + "```" + "\n" + "https://api.adomate.ai/v1/"
-		}
-
-		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: content,
-			},
-		})
-		if err2 != nil {
-			fmt.Println("Error:", err)
-		}
-
-	case "frontend":
-
-		status, err := getStatus("https://www.adomate.ai/")
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
-		var content string
-		if status == "200 OK" {
-			content = "Frontend is operational." + "```" + "\nCode: " + status + "```" + "\n" + "https://www.adomate.ai/"
-		} else {
-			content = "Frontend is having issues." + "```" + "\nCode: " + status + "```" + "\n" + "https://www.adomate.ai/"
-		}
-
-		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: content,
-			},
-		})
-		if err2 != nil {
 			fmt.Println("Error:", err)
 		}
 
@@ -158,34 +101,6 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		})
 		if err2 != nil {
-			fmt.Println("Error:", err)
-		}
-	case "help":
-		embed := &discordgo.MessageEmbed{
-			Title:       "Adomate Bot Help",
-			Description: "Adomate Bot is a bot that helps with Adomate's Discord Server.",
-			Color:       0x637EFE,
-			Fields: []*discordgo.MessageEmbedField{
-				{
-					Name:   "Commands",
-					Value:  "1. /welcome\n2. /api\n3. /frontend\n4. /status\n5. /help",
-					Inline: true,
-				},
-				{
-					Name:   "Description",
-					Value:  "Sends a welcome message and assigns roles.\nChecks the status of the API.\nChecks the status of the Frontend.\nStatus dashboard for all services.\nShows this help message.",
-					Inline: true,
-				},
-			},
-		}
-		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Flags:  1 << 6,
-				Embeds: []*discordgo.MessageEmbed{embed},
-			},
-		})
-		if err != nil {
 			fmt.Println("Error:", err)
 		}
 	}
@@ -260,22 +175,6 @@ func getStatus(url string) (string, error) {
 		return "", fmt.Errorf("status code error: %d %s", resp.StatusCode, resp.Status)
 	}
 	return resp.Status, nil
-}
-
-func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if i.Type == discordgo.InteractionMessageComponent && i.MessageComponentData().CustomID == "delete_message" {
-		err := s.ChannelMessageDelete(i.ChannelID, i.Message.ID)
-		if err != nil {
-			fmt.Println("Error deleting message:", err)
-		}
-
-		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseDeferredMessageUpdate,
-		})
-		if err != nil {
-			fmt.Println("Error sending interaction response:", err)
-		}
-	}
 }
 
 type Team struct {
