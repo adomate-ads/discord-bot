@@ -238,7 +238,7 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 	}
 	_, err := s.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{Embed: embedFull})
 	if err != nil {
-		fmt.Println("Error:", err)
+		return err
 	}
 
 	return nil

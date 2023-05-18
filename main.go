@@ -111,16 +111,19 @@ func main() {
 			err := json.Unmarshal(d.Body, &msg)
 			if err != nil {
 				log.Printf("Failed to parse messages: %v", err)
+				continue
 			}
 			if msg.Type == "Error" || msg.Type == "Warning" {
 				err = sendDiscordMessage(discord, os.Getenv("ERROR_CHANNEL_ID"), msg)
 				if err != nil {
 					log.Printf("Failed to send message to Discord: %v", err)
+					continue
 				}
 			} else {
 				err = sendDiscordMessage(discord, os.Getenv("LOG_CHANNEL_ID"), msg)
 				if err != nil {
 					log.Printf("Failed to send message to Discord: %v", err)
+					continue
 				}
 			}
 			err = d.Ack(false)
