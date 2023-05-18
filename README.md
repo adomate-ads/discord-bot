@@ -23,7 +23,7 @@ Allow the bot to send and manage messages in the channel.
 
 Run the RabbitMQ container and sign-in with your credentials.
 
-Run the go files from the cloned repository using `go run all`.
+Run the go files from the cloned repository using `go run .`.
 
 ## Integration
 To integrate the ChatBot with the Adomate API, update the .env file with the following parameters:
@@ -38,6 +38,13 @@ To integrate the ChatBot with the Adomate API, update the .env file with the fol
 - RABBIT_USER - RabbitMQ Username
 - RABBIT_PASS - RabbitMQ Password
 - RABBIT_DISCORD_QUEUE - RabbitMQ queue name
+- BETTERSTACK_TOKEN - BetterStack API key to get status
+- FRONTEND_ROLE_ID - Role ID for frontend team
+- BACKEND_ROLE_ID - Role ID for backend team
+- DISCORD_ROLE_ID - Role ID for discord team
+- ERROR_CHANNEL_ID - Channel ID for error messages
+- LOG_CHANNEL_ID - Channel ID for log messages
+- GITHUB_PAT - Github Personal Access Token
 
 ## Commands
 To Activate commands for the Adomate Bot, Send an `Activate` message on the channel.
@@ -49,7 +56,6 @@ To Activate commands for the Adomate Bot, Send an `Activate` message on the chan
  `/frontend` - provides status for adomate.ai
  
  `/api` - provides status for the Adomate API
-
  
 > More Commands Coming Soon... 
 
@@ -65,11 +71,12 @@ Messages are categorized into four types:
 
 `Log` - The API logged an event. Log event messages are marked with green embed.
 
-`General` - General event messages. General event messages are marked with white embed.
+### Title
 
-### Suggestions
+The title provides a brief description of the event.
+### Message
 
-The Suggestion message is sent by the API with a suggestion to fix errors or warnings. 
+Provides the message content summary of the event.
 
 ### Origin
 
@@ -79,10 +86,6 @@ Provides the name of the event originator.
 
 Provides the time when the event occured in the API.
 
-### Delete Message button
-
-The message contains a delete message button that allows the client to  delete the message sent from the API after the conflict/errors are resolved.
-
 ## Message Template
 
 RabbitMQ queue takes in the following message format to send messages to the discord bot.
@@ -90,11 +93,11 @@ RabbitMQ queue takes in the following message format to send messages to the dis
 ```
 {
 "type":"Error",
-"message":"API server down",
-"suggestion":"contact Adomate Support support@adomate.ai",
+"title":"API server down",
+"message":"contact Adomate Support support@adomate.ai",
 "origin":"API",
 "time":"2023-03-10T11:45:26.371Z"
 }
 ```
 
-Where type is the message type, message provides the message content, suggestion provides suggestions to fix errors or warnings, origin provides the name of the event originator, and time indicates the time when the event occurred in the API.
+Where type can be `Error`, `Warning`, or `Log`. Title is a brief description of the event. Message is the content summary of the event. Origin is the name of the event originator. Time is the time when the event occured in the API.
