@@ -38,13 +38,8 @@ jobs:
         uses: imranismail/setup-kustomize@v2
       - name: Update manifests
         run: |
-          cd $GITHUB_WORKSPACE/gitops
-          cd apps
-          cd discord-bot
-          cd manifests
-          kustomize edit set image ${{ secrets.DOCKER_USER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.sha }}
-          cd ..
-          kustomize build ./manifests/ > ./kustomization/manifests.yaml
+          cd $GITHUB_WORKSPACE/gitops/overlays/prod
+          kustomize edit set image ${{ secrets.DOCKER_USER }}/${{ secrets.REPOSITORY_NAME }}=${{ secrets.DOCKER_USER }}/${{ secrets.REPOSITORY_NAME }}:${{ github.sha }}
       - name: Commit and push changes
         run: |
           cd $GITHUB_WORKSPACE/gitops
