@@ -40,19 +40,24 @@ func sendDiscordMessage(s *discordgo.Session, msg Message) error {
 	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
 
 	channelID := ""
+	statusIcon := ""
 
 	switch msg.Type {
 	case "Error":
 		channelID = "1108183014468497469"
+		statusIcon = ":red_square:"
 	case "Warning":
 		channelID = "1108183014468497469"
+		statusIcon = ":yellow_square:"
 	case "Log":
 		channelID = "1108183035502936165"
+		statusIcon = ":white_large_square:"
 	default:
 		channelID = "1108183035502936165"
+		statusIcon = ":white_circle:"
 	}
 
-	_, err := s.ChannelMessageSend(channelID, fmt.Sprintf("[%s][%s]: %s - %s", timestampStr, msg.Origin, msg.Title, msg.Message))
+	_, err := s.ChannelMessageSend(channelID, fmt.Sprintf("%s[%s][%s]: %s - %s", statusIcon, timestampStr, msg.Origin, msg.Title, msg.Message))
 	if err != nil {
 		return err
 	}
