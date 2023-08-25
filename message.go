@@ -97,7 +97,7 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		err2 := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Flags: 1 << 6,
+				Flags:  1 << 6,
 				Embeds: []*discordgo.MessageEmbed{embed},
 			},
 		})
@@ -126,7 +126,7 @@ type Message struct {
 	}
 */
 
-func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
+func sendDiscordEmbed(s *discordgo.Session, channelID string, msg Message) error {
 	unixTime := msg.Time.Unix()
 	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
 	embedFull := &discordgo.MessageEmbed{
@@ -153,6 +153,18 @@ func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) err
 		embedFull.Color = 0x800000 // Maroon
 	}
 	_, err := s.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{Embed: embedFull})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func sendDiscordMessage(s *discordgo.Session, channelID string, msg Message) error {
+	unixTime := msg.Time.Unix()
+	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
+
+	_, err := s.ChannelMessageSend(channelID, fmt.Sprintf("[%s][%s]: %s - %s", timestampStr, msg.Origin, msg.Title, msg.Message))
 	if err != nil {
 		return err
 	}

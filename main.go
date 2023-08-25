@@ -113,7 +113,7 @@ func main() {
 				continue
 			}
 			if msg.Type == "Error" || msg.Type == "Warning" {
-				err = sendDiscordMessage(discord, os.Getenv("ERROR_CHANNEL_ID"), msg)
+				err = sendDiscordEmbed(discord, os.Getenv("ERROR_CHANNEL_ID"), msg)
 				if err != nil {
 					log.Printf("Failed to send message to Discord: %v", err)
 					continue
