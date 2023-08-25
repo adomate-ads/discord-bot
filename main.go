@@ -35,14 +35,6 @@ func main() {
 
 	// Register the messageCreate func as a callback for MessageCreate events.
 	discord.AddHandler(messageCreate)
-	//discord.AddHandler(handleInteraction)
-	//err = registerCommands(discord, os.Getenv("GUILD_ID"))
-	//if err != nil {
-	//	fmt.Println("Error registering commands: ", err)
-	//}
-
-	// In this example, we only care about receiving message events.
-	discord.Identify.Intents = discordgo.IntentsGuildMessages
 
 	RMQConfig := RabbitMQConfig{
 		Host:     os.Getenv("RABBIT_HOST"),
@@ -112,18 +104,10 @@ func main() {
 				log.Printf("Failed to parse messages: %v", err)
 				continue
 			}
-			if msg.Type == "Error" || msg.Type == "Warning" {
-				err = sendDiscordEmbed(discord, os.Getenv("ERROR_CHANNEL_ID"), msg)
-				if err != nil {
-					log.Printf("Failed to send message to Discord: %v", err)
-					continue
-				}
-			} else {
-				err = sendDiscordMessage(discord, os.Getenv("LOG_CHANNEL_ID"), msg)
-				if err != nil {
-					log.Printf("Failed to send message to Discord: %v", err)
-					continue
-				}
+			err = sendDiscordMessage(discord, msg)
+			if err != nil {
+				log.Printf("Failed to send message to Discord: %v", err)
+				continue
 			}
 			err = d.Ack(false)
 			if err != nil {
