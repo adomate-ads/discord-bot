@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type RabbitMQConfig struct {
@@ -130,6 +131,7 @@ func main() {
 		Title:   "Bot is now running",
 		Message: "",
 		Origin:  "Discord",
+		Time:    time.Now(),
 	}); err != nil {
 		log.Fatal(err)
 	}
