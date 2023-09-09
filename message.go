@@ -37,7 +37,7 @@ type Message struct {
 
 func sendDiscordMessage(s *discordgo.Session, msg Message) error {
 	unixTime := msg.Time.Unix()
-	timestampStr := time.Unix(unixTime, 0).Format("2006-01-02 15:04:05")
+	timestampStr := time.Unix(unixTime, 0).Format("2006/01/02 15:04:05")
 
 	channelID := ""
 	statusIcon := ""
@@ -57,7 +57,21 @@ func sendDiscordMessage(s *discordgo.Session, msg Message) error {
 		statusIcon = ":white_circle:"
 	}
 
-	_, err := s.ChannelMessageSend(channelID, fmt.Sprintf("%s[%s][%s]: %s - %s", statusIcon, timestampStr, msg.Origin, msg.Title, msg.Message))
+	message := "["
+
+	width := 10
+	spaces := width - len(msg.Origin)
+	for i := 0; i < spaces/2; i++ {
+		message += " "
+	}
+	message += msg.Origin
+	for i := 0; i < (spaces - spaces/2); i++ {
+		message += " "
+	}
+
+	message += "]"
+
+	_, err := s.ChannelMessageSend(channelID, fmt.Sprintf("%s | %s |%s| %s | %s", message, timestampStr, statusIcon, msg.Title, msg.Message))
 	if err != nil {
 		return err
 	}
