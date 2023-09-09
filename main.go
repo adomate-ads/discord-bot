@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 type RabbitMQConfig struct {
@@ -116,13 +115,7 @@ func main() {
 		}
 	}
 
-	go func() {
-		checkQueue()
-		ticker := time.NewTicker(time.Hour)
-		for range ticker.C {
-			checkQueue()
-		}
-	}()
+	go checkQueue()
 
 	// Open a websocket connection to Discord and begin listening.
 	err = discord.Open()
@@ -132,6 +125,15 @@ func main() {
 	}
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
+	if err := sendDiscordMessage(discord, Message{
+		Type:    "Log",
+		Title:   "Bot is now running",
+		Message: "",
+		Origin:  "Discord",
+	}); err != nil {
+		log.Fatal(err)
+	}
+
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
