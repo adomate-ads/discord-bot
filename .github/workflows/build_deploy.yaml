@@ -9,7 +9,7 @@ jobs:
     name: Build and push Docker image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set Tag in env variable
         run: |
           echo "sha_short=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
@@ -29,7 +29,7 @@ jobs:
     needs: build
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'adomate-ads/gitops'
           path: gitops
