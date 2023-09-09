@@ -44,7 +44,11 @@ func main() {
 		Queue:    os.Getenv("RABBIT_DISCORD_QUEUE"),
 	}
 
-	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", RMQConfig.User, RMQConfig.Password, RMQConfig.Host, RMQConfig.Port))
+	config := amqp.Config{
+		Heartbeat: 60 * time.Second,
+	}
+
+	conn, err := amqp.DialConfig(fmt.Sprintf("amqp://%s:%s@%s:%s/", RMQConfig.User, RMQConfig.Password, RMQConfig.Host, RMQConfig.Port), config)
 	if err != nil {
 		fmt.Println("Failed to connect to RabbitMQ")
 		fmt.Println(RMQConfig)
