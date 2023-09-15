@@ -35,6 +35,14 @@ func main() {
 
 	// Register the messageCreate func as a callback for MessageCreate events.
 	discord.AddHandler(messageCreate)
+	discord.AddHandler(handleInteraction)
+	err = registerCommands(discord, os.Getenv("GUILD_ID"))
+	if err != nil {
+		fmt.Println("Error registering commands: ", err)
+	}	
+
+	// In this example, we only care about receiving message events.
+	discord.Identify.Intents = discordgo.IntentsGuildMessages
 
 	RMQConfig := RabbitMQConfig{
 		Host:     os.Getenv("RABBIT_HOST"),
@@ -44,11 +52,7 @@ func main() {
 		Queue:    os.Getenv("RABBIT_DISCORD_QUEUE"),
 	}
 
-	config := amqp.Config{
-		Heartbeat: 60 * time.Second,
-	}
-
-	conn, err := amqp.DialConfig(fmt.Sprintf("amqp://%s:%s@%s:%s/", RMQConfig.User, RMQConfig.Password, RMQConfig.Host, RMQConfig.Port), config)
+	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%s/", RMQConfig.User, RMQConfig.Password, RMQConfig.Host, RMQConfig.Port))
 	if err != nil {
 		fmt.Println("Failed to connect to RabbitMQ")
 		fmt.Println(RMQConfig)
@@ -108,10 +112,18 @@ func main() {
 				log.Printf("Failed to parse messages: %v", err)
 				continue
 			}
-			err = sendDiscordMessage(discord, msg)
-			if err != nil {
-				log.Printf("Failed to send message to Discord: %v", err)
-				continue
+			if msg.Type == "Error" || msg.Type == "Warning" {
+				err = sendDiscordMessage(discord, os.Getenv("ERROR_CHANNEL_ID"), msg)
+				if err != nil {
+					log.Printf("Failed to send message to Discord: %v", err)
+					continue
+				}
+			} else {
+				err = sendDiscordMessage(discord, os.Getenv("LOG_CHANNEL_ID"), msg)
+				if err != nil {
+					log.Printf("Failed to send message to Discord: %v", err)
+					continue
+				}
 			}
 			err = d.Ack(false)
 			if err != nil {
@@ -120,7 +132,13 @@ func main() {
 		}
 	}
 
-	go checkQueue()
+	go func() {
+		checkQueue()
+		ticker := time.NewTicker(time.Hour)
+		for range ticker.C {
+			checkQueue()
+		}
+	}()
 
 	// Open a websocket connection to Discord and begin listening.
 	err = discord.Open()
@@ -130,16 +148,6 @@ func main() {
 	}
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
-	if err := sendDiscordMessage(discord, Message{
-		Type:    "Log",
-		Title:   "Bot is now running",
-		Message: "",
-		Origin:  "Discord",
-		Time:    time.Now(),
-	}); err != nil {
-		log.Fatal(err)
-	}
-
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
