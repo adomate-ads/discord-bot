@@ -64,29 +64,7 @@ func handleReconnection(RMQConfig RabbitMQConfig) (*amqp.Connection, *amqp.Chann
 	}
 }
 
-func setupConsumer(ch *amqp.Channel, RMQConfig RabbitMQConfig, discord *discordgo.Session) (<-chan amqp.Delivery, error) {
-	q, err := ch.QueueDeclare(
-		RMQConfig.Queue,
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	err = ch.Qos(1, 0, false)
-	if err != nil {
-		return nil, err
-	}
-
-	msgs, err := ch.Consume(q.Name, "", false, false, false, false, nil)
-	if err != nil {
-		return nil, err
-	}
-
+func processMessages(msgs <-chan amqp.Delivery, discord *discordgo.Session) {
 	go func() {
 		for d := range msgs {
 			var msg Message
@@ -106,8 +84,35 @@ func setupConsumer(ch *amqp.Channel, RMQConfig RabbitMQConfig, discord *discordg
 			}
 		}
 	}()
+}
 
-	return msgs, nil
+func setupConsumer(ch *amqp.Channel, RMQConfig RabbitMQConfig, discord *discordgo.Session) {
+	q, err := ch.QueueDeclare(
+		RMQConfig.Queue,
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Println("Failed to declare queue:", err)
+		return
+	}
+
+	err = ch.Qos(1, 0, false)
+	if err != nil {
+		log.Println("Failed to set QoS:", err)
+		return
+	}
+
+	msgs, err := ch.Consume(q.Name, "", false, false, false, false, nil)
+	if err != nil {
+		log.Println("Failed to register a consumer:", err)
+		return
+	}
+
+	processMessages(msgs, discord)
 }
 
 func main() {
@@ -143,67 +148,7 @@ func main() {
 			log.Println("RabbitMQ connection closed. Attempting to reconnect...")
 			conn, ch = handleReconnection(RMQConfig)
 			closeErrChan = conn.NotifyClose(make(chan *amqp.Error))
-			_, err := setupConsumer(ch, RMQConfig, discord)
-			if err != nil {
-				log.Printf("Failed to setup consumer after reconnection: %v", err)
-			}
-		}
-	}()
-
-	q, err := ch.QueueDeclare(
-		RMQConfig.Queue, // name
-		true,            // durable
-		false,           // delete when unused
-		false,           // exclusive
-		false,           // no-wait
-		nil,             // arguments
-	)
-	if err != nil {
-		fmt.Println("Failed to declare queue")
-		log.Fatal(err)
-	}
-
-	err = ch.Qos(
-		1,     // prefetch count
-		0,     // prefetch size
-		false, // global
-	)
-	if err != nil {
-		fmt.Println("Failed to set QoS")
-		log.Fatal(err)
-	}
-
-	msgs, err := ch.Consume(
-		q.Name, // queue
-		"",     // consumer
-		false,  // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-	)
-	if err != nil {
-		fmt.Println("Failed to register a consumer")
-		log.Fatal(err)
-	}
-
-	go func() {
-		for d := range msgs {
-			var msg Message
-			err := json.Unmarshal(d.Body, &msg)
-			if err != nil {
-				log.Printf("Failed to parse messages: %v", err)
-				continue
-			}
-			err = sendDiscordMessage(discord, msg)
-			if err != nil {
-				log.Printf("Failed to send message to Discord: %v", err)
-				continue
-			}
-			err = d.Ack(false)
-			if err != nil {
-				log.Printf("Failed to acknowledge message: %v", err)
-			}
+			setupConsumer(ch, RMQConfig, discord)
 		}
 	}()
 
