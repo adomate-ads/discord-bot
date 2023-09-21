@@ -13,12 +13,55 @@ import (
 	"time"
 )
 
+const (
+	InitialBackOff = 5 * time.Second
+	MaxBackOff     = 1 * time.Minute
+)
+
 type RabbitMQConfig struct {
 	Host     string
 	Port     string
 	User     string
 	Password string
 	Queue    string
+}
+
+func connectRabbitMQ(RMQConfig RabbitMQConfig) (*amqp.Connection, *amqp.Channel, error) {
+	config := amqp.Config{
+		Heartbeat: 60 * time.Second,
+	}
+
+	conn, err := amqp.DialConfig(fmt.Sprintf("amqp://%s:%s@%s:%s/", RMQConfig.User, RMQConfig.Password, RMQConfig.Host, RMQConfig.Port), config)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ch, err := conn.Channel()
+	if err != nil {
+		conn.Close()
+		return nil, nil, err
+	}
+
+	return conn, ch, nil
+}
+
+func handleReconnection(RMQConfig RabbitMQConfig) (*amqp.Connection, *amqp.Channel) {
+	backoff := InitialBackOff
+
+	for {
+		conn, ch, err := connectRabbitMQ(RMQConfig)
+		if err == nil {
+			log.Println("Successfully connected to RabbitMQ!")
+			return conn, ch
+		}
+
+		log.Printf("Failed to connect to RabbitMQ. Retrying in %v... Error: %v", backoff, err)
+		time.Sleep(backoff)
+
+		if backoff < MaxBackOff {
+			backoff *= 2
+		}
+	}
 }
 
 func main() {
@@ -44,24 +87,18 @@ func main() {
 		Queue:    os.Getenv("RABBIT_DISCORD_QUEUE"),
 	}
 
-	config := amqp.Config{
-		Heartbeat: 60 * time.Second,
-	}
+	// Initial connection to RabbitMQ
+	conn, ch := handleReconnection(RMQConfig)
 
-	conn, err := amqp.DialConfig(fmt.Sprintf("amqp://%s:%s@%s:%s/", RMQConfig.User, RMQConfig.Password, RMQConfig.Host, RMQConfig.Port), config)
-	if err != nil {
-		fmt.Println("Failed to connect to RabbitMQ")
-		fmt.Println(RMQConfig)
-		log.Fatal(err)
-	}
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	if err != nil {
-		fmt.Println("Failed to create Channel")
-		log.Fatal(err)
-	}
-	defer ch.Close()
+	go func() {
+		closeErrChan := conn.NotifyClose(make(chan *amqp.Error))
+		for {
+			<-closeErrChan
+			log.Println("RabbitMQ connection closed. Attempting to reconnect...")
+			conn, ch = handleReconnection(RMQConfig)
+			closeErrChan = conn.NotifyClose(make(chan *amqp.Error))
+		}
+	}()
 
 	q, err := ch.QueueDeclare(
 		RMQConfig.Queue, // name
@@ -100,7 +137,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	checkQueue := func() {
+	go func() {
 		for d := range msgs {
 			var msg Message
 			err := json.Unmarshal(d.Body, &msg)
@@ -118,9 +155,7 @@ func main() {
 				log.Printf("Failed to acknowledge message: %v", err)
 			}
 		}
-	}
-
-	go checkQueue()
+	}()
 
 	// Open a websocket connection to Discord and begin listening.
 	err = discord.Open()
@@ -145,4 +180,5 @@ func main() {
 	<-sc
 	// Cleanly close down the Discord session.
 	discord.Close()
+	conn.Close()
 }
