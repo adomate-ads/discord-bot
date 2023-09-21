@@ -64,6 +64,52 @@ func handleReconnection(RMQConfig RabbitMQConfig) (*amqp.Connection, *amqp.Chann
 	}
 }
 
+func setupConsumer(ch *amqp.Channel, RMQConfig RabbitMQConfig, discord *discordgo.Session) (<-chan amqp.Delivery, error) {
+	q, err := ch.QueueDeclare(
+		RMQConfig.Queue,
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ch.Qos(1, 0, false)
+	if err != nil {
+		return nil, err
+	}
+
+	msgs, err := ch.Consume(q.Name, "", false, false, false, false, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		for d := range msgs {
+			var msg Message
+			err := json.Unmarshal(d.Body, &msg)
+			if err != nil {
+				log.Printf("Failed to parse messages: %v", err)
+				continue
+			}
+			err = sendDiscordMessage(discord, msg)
+			if err != nil {
+				log.Printf("Failed to send message to Discord: %v", err)
+				continue
+			}
+			err = d.Ack(false)
+			if err != nil {
+				log.Printf("Failed to acknowledge message: %v", err)
+			}
+		}
+	}()
+
+	return msgs, nil
+}
+
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil && os.Getenv("PROD") != "true" {
@@ -97,6 +143,10 @@ func main() {
 			log.Println("RabbitMQ connection closed. Attempting to reconnect...")
 			conn, ch = handleReconnection(RMQConfig)
 			closeErrChan = conn.NotifyClose(make(chan *amqp.Error))
+			_, err := setupConsumer(ch, RMQConfig, discord)
+			if err != nil {
+				log.Printf("Failed to setup consumer after reconnection: %v", err)
+			}
 		}
 	}()
 
