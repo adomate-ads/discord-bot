@@ -152,6 +152,8 @@ func main() {
 		}
 	}()
 
+	setupConsumer(ch, RMQConfig, discord)
+
 	// Open a websocket connection to Discord and begin listening.
 	err = discord.Open()
 	if err != nil {
